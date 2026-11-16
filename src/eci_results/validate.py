@@ -14,10 +14,17 @@ import json
 import numpy as np
 import pandas as pd
 
-from eci_results.build import ELECTION_TYPE, RELEASE, TCPD_FILE, read_tcpd
+from eci_results.build import (
+    ELECTION_TYPE,
+    RELEASE,
+    TCPD_FILE,
+    map_parties,
+    party_lookup,
+    read_tcpd,
+)
 from eci_results.fetch import SOURCE, check
 from eci_results.rules import CONTEST, DERIVED, derive
-from eci_results.sources import read_azadecon, read_eci_detailed
+from eci_results.sources import READERS
 
 
 def agree(published, derived):
@@ -28,32 +35,68 @@ def agree(published, derived):
     return published.astype(str).eq(derived.astype(str)) | both_empty
 
 
-def scrape_check(source):
-    """How far the counting-day scrape used for Rajasthan, Madhya Pradesh and
-    Chhattisgarh 2023 is from ECI's report, in the two states that have both."""
-    official = {
-        i["state"]: i for i in source["results"] if i["format"] == "eci_detailed"
+def scrape_check(source, parties):
+    """Compare each scrape of ECI's results website with ECI's report.
+
+    A seat is identical when the sorted vote counts of all its rows, NOTA
+    included, agree. Writes data/release/scrape_check.csv.
+    """
+    reports = {
+        (i["state"], i["year"]): i
+        for i in source["results"]
+        if i["format"] in ("eci_detailed",)
     }
     rows = []
-    for state, folder in [("Telangana", "ts"), ("Mizoram", "mz")]:
-        scrape = read_azadecon(check(source["reference"][f"scrape_check_{folder}"]))
-        report = read_eci_detailed(check(official[state]))
+    for item in source["checks"]:
+        scrape = READERS[item["format"]](check(item))
+        if "only_seats" in item:
+            scrape = scrape[scrape["Constituency_No"].isin(item["only_seats"])]
+        report = READERS["eci_detailed"](check(reports[(item["state"], item["year"])]))
+        report = report[report["Votes"].notna()]
+        scrape = scrape[scrape["Votes"].notna()]
+        both = sorted(set(scrape["Constituency_No"]) & set(report["Constituency_No"]))
         votes = [
-            frame.groupby("Constituency_No")["Votes"].apply(lambda v: tuple(sorted(v)))
-            for frame in (scrape, report)
+            f[f["Constituency_No"].isin(both)]
+            .groupby("Constituency_No")["Votes"]
+            .apply(lambda v: tuple(sorted(v)))
+            for f in (scrape, report)
         ]
         totals = [
-            frame.groupby("Constituency_No")["Votes"].sum()
-            for frame in (scrape, report)
+            f[f["Constituency_No"].isin(both)].groupby("Constituency_No")["Votes"].sum()
+            for f in (scrape, report)
         ]
-        same = votes[0].eq(votes[1].reindex(votes[0].index))
-        gap = (totals[0] - totals[1]).abs()
+        same = votes[0].eq(votes[1])
+        sizes = [
+            f[f["Constituency_No"].isin(both)].groupby("Constituency_No").size()
+            for f in (scrape, report)
+        ]
+        winners = [
+            map_parties(
+                f[f["Constituency_No"].isin(both)]
+                .sort_values("Votes", ascending=False)
+                .drop_duplicates("Constituency_No")
+                .copy(),
+                parties,
+            ).set_index("Constituency_No")["Party_ID"]
+            for f in (scrape, report)
+        ]
+        winners[1] = winners[1].reindex(winners[0].index)
+        known = winners[0].notna() & winners[1].notna()
         rows.append(
             {
-                "state": state,
-                "seats": len(same),
+                "state": item["state"],
+                "year": item["year"],
+                "scrape": item["format"],
+                "seats_compared": len(both),
                 "seats_identical": int(same.sum()),
-                "largest_total_gap": int(gap.max()),
+                "seats_same_candidate_count": int(
+                    sizes[0].eq(sizes[1].reindex(sizes[0].index)).sum()
+                ),
+                "winner_party_compared": int(known.sum()),
+                "winner_party_same": int(winners[0].eq(winners[1])[known].sum()),
+                "largest_total_gap": int((totals[0] - totals[1]).abs().max()),
+                "seats_only_in_scrape": len(set(scrape["Constituency_No"]) - set(both)),
+                "seats_only_in_report": len(set(report["Constituency_No"]) - set(both)),
             }
         )
     table = pd.DataFrame(rows)
@@ -85,7 +128,8 @@ def main():
     RELEASE.mkdir(parents=True, exist_ok=True)
     table.to_csv(RELEASE / "rule_check.csv", index=False)
     print(table.to_string(index=False))
-    scrape_check(source)
+    tcpd = {e: read_tcpd(ref[f]) for e, f in TCPD_FILE.items()}
+    scrape_check(source, party_lookup(pd.read_csv(check(ref["ppi"])), tcpd))
 
 
 if __name__ == "__main__":

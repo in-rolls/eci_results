@@ -54,12 +54,55 @@ def test_key_ignores_case_punctuation_and_reservation(a, b):
     assert key(a) == key(b)
 
 
-def test_parties_map_to_tcpd_labels_and_new_parties_keep_their_name():
-    by_name = {key("Bharatiya Janata Party"): ("BJP", 1605)}
-    frame = pd.DataFrame(
-        {"Party_Source": ["Bharatiya Janata Party", "Independent", "NOTA", "New"]}
-    )
-    out = map_parties(frame, by_name, {})
-    assert out["Party"].tolist() == ["BJP", "IND", "NOTA", "New"]
-    assert out["Party_ID"].tolist()[:3] == [1605, 10809, 5897]
-    assert pd.isna(out["Party_ID"].iloc[3])
+def test_parties_match_exact_labels_before_looser_ones():
+    """JnP is Jana Sena and JNP Janata Party; CPI(M) is not CPI(ML) Red Star's
+    CPIM. New parties keep their printed label and get no Party_ID."""
+    lookup = {
+        "label": {1605: "BJP", 17069: "JnP", 4406: "JP", 14635: "CPM", 2560: "CPIM"},
+        "alias": {},
+        "index": {
+            "exact": {"JnP": [17069], "JNP": [4406], "CPI(M)": [14635], "CPIM": [2560]},
+            "compact": {"JnP": [17069], "JNP": [4406], "CPIM": [14635, 2560]},
+            "any case": {"JNP": [17069, 4406], "CPIM": [14635, 2560]},
+            "name": {key("Bharatiya Janata Party"): [1605]},
+        },
+        "states": {14635: {"X"}, 2560: {"Y"}},
+        "size": {14635: 900, 2560: 10},
+    }
+    labels = ["Bharatiya Janata Party", "Independent", "NOTA", "JnP", "CPI(M)", "New"]
+    frame = pd.DataFrame({"State_Name": "X", "Party_Source": labels})
+    out = map_parties(frame, lookup)
+    assert out["Party"].tolist() == ["BJP", "IND", "NOTA", "JnP", "CPM", "New"]
+    assert out["Party_ID"].tolist()[:5] == [1605, 10809, 5897, 17069, 14635]
+    assert pd.isna(out["Party_ID"].iloc[5])
+
+
+@pytest.mark.parametrize("layout", ["2023", "2024"])
+def test_detailed_results_read_by_header_in_both_layouts(tmp_path, layout):
+    """2024 reports say GENDER and add a percentage before TOTAL ELECTORS."""
+    from eci_results.sources import read_eci_detailed
+
+    head = ["STATE/UT NAME", "AC NO.", "AC NAME", "CANDIDATE NAME"]
+    head += ["GENDER" if layout == "2024" else "SEX", "AGE", "CATEGORY", "PARTY"]
+    head += ["SYMBOL", "GENERAL", "POSTAL", "TOTAL", "% OVER VALID VOTES"]
+    head += ["% OVER TOTAL ELECTORS"] if layout == "2024" else []
+    head += ["TOTAL ELECTORS"]
+    rows = [
+        ["Sikkim", 1, "Yoksam Tashiding (BL)", "1 Pema Lepcha", "MALE", 40, "BL"],
+        ["Sikkim", 1, "Yoksam Tashiding (BL)", "2 Nota", None, None, None],
+    ]
+    rows[0] += ["SKM", "Flower", 900, 10, 910, 91.0]
+    rows[1] += ["NOTA", "NOTA", 90, 0, 90, 9.0]
+    for r in rows:
+        r += [45.5] if layout == "2024" else []
+        r += [2000]
+    table = pd.DataFrame([["10 - Detailed Results"], [], [], head] + rows)
+    path = tmp_path / "report.xlsx"
+    table.to_excel(path, header=False, index=False)
+    out = read_eci_detailed(path)
+    assert out["Electors"].tolist() == [2000, 2000]
+    assert out["Candidate"].tolist() == ["Pema Lepcha", "None of the Above"]
+    assert out["Party_Source"].tolist() == ["SKM", "NOTA"]
+    assert out["Constituency_Name"].iloc[0] == "YOKSAM TASHIDING"
+    assert out["Constituency_Type"].iloc[0] == "BL"
+    assert out["Candidate_Type"].iloc[0] == "BL" and out["Sex"].iloc[0] == "M"

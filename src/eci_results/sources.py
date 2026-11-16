@@ -18,7 +18,8 @@ STATE_CODES = {
 NOTA_NAMES = {"NOTA", "NONE OF THE ABOVE"}
 # TCPD's majority codings (it mixes M/MALE and GEN/GENERAL across years).
 SEX = {"MALE": "M", "FEMALE": "F", "THIRD": "O", "OTHERS": "O", "TG": "O"}
-CATEGORY = {"GENERAL": "GEN", "SC": "SC", "ST": "ST"}
+# BL is Sikkim's Bhutia-Lepcha seat category, which TCPD also uses.
+CATEGORY = {"GENERAL": "GEN", "SC": "SC", "ST": "ST", "BL": "BL"}
 
 
 # ECI names TCPD writes differently.
@@ -83,30 +84,45 @@ def read_india_votes_data(path):
 def read_eci_detailed(path):
     """ECI statistical report "10 - Detailed Results" workbook (assemblies).
 
-    One row per candidate, NOTA included; names carry their ballot serial
-    ("1 Robert Romawia Royte"), which is dropped.
+    One row per candidate, NOTA included. Columns are found by header, because
+    the layout changed in 2024: GENDER for SEX, and a second vote percentage
+    that pushes TOTAL ELECTORS one column right. Names carry their ballot
+    serial ("1 Robert Romawia Royte"), which is dropped.
     """
-    table = pd.read_excel(path, header=None, skiprows=4)
-    table = table[pd.to_numeric(table[1], errors="coerce").notna()]
+    raw = pd.read_excel(path, header=None)
+    header = raw.index[raw[0].astype(str).str.strip().eq("STATE/UT NAME")][0]
+    names = raw.loc[header].astype(str).str.strip().tolist()
+    table = raw.loc[header + 1 :]
+    table.columns = names
+    table = table[pd.to_numeric(table["AC NO."], errors="coerce").notna()]
+    sex = "GENDER" if "GENDER" in names else "SEX"
     return mark_nota(
         pd.DataFrame(
             {
-                "State_Name": table[0].map(tcpd_state),
-                "Constituency_No": table[1].astype(int),
-                "Constituency_Name": table[2]
-                .str.replace(r"\s*\((SC|ST)\)\s*$", "", regex=True)
+                "State_Name": table["STATE/UT NAME"].map(tcpd_state),
+                "Constituency_No": table["AC NO."].astype(int),
+                "Constituency_Name": table["AC NAME"]
+                .astype(str)
+                .str.replace(r"\s*\((SC|ST|BL)\)\s*$", "", regex=True)
                 .str.strip()
                 .str.upper(),
-                "Candidate": table[3]
+                "Constituency_Type": table["AC NAME"]
+                .astype(str)
+                .str.extract(r"\((SC|ST|BL)\)\s*$")[0]
+                .fillna("GEN"),
+                "Candidate": table["CANDIDATE NAME"]
                 .astype(str)
                 .str.replace(r"^\d+\s+", "", regex=True)
                 .str.strip(),
-                "Party_Source": table[7].astype(str).str.strip(),
-                "Votes": pd.to_numeric(table[11], errors="coerce"),
-                "Sex": table[4].astype(str).str.upper().map(SEX),
-                "Age": pd.to_numeric(table[5], errors="coerce"),
-                "Candidate_Type": table[6].astype(str).str.upper().map(CATEGORY),
-                "Electors": pd.to_numeric(table[13], errors="coerce"),
+                "Party_Source": table["PARTY"].astype(str).str.strip(),
+                "Votes": pd.to_numeric(table["TOTAL"], errors="coerce"),
+                "Sex": table[sex].astype(str).str.upper().map(SEX),
+                "Age": pd.to_numeric(table["AGE"], errors="coerce"),
+                "Candidate_Type": table["CATEGORY"]
+                .astype(str)
+                .str.upper()
+                .map(CATEGORY),
+                "Electors": pd.to_numeric(table["TOTAL ELECTORS"], errors="coerce"),
             }
         )
     )

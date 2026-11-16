@@ -1,8 +1,9 @@
 """Download every input named in data/source.json and check its SHA-256.
 
-Files already present with the right hash are left alone. The archived ECI
-pages (data/wayback/) are committed, not downloaded; parse_wayback.py turns
-them into the CSVs listed with format "wayback".
+Files already present with the right hash are left alone. Raw inputs are
+committed under data/raw/; this restores them if deleted and downloads TCPD's
+reference files into data/reference/, which are not redistributed. ECI's
+statistical reports cannot be fetched by script (eci.gov.in refuses it).
 
     python -m eci_results.fetch
 """
@@ -83,13 +84,15 @@ def check(item):
 
 def inputs(source):
     yield from source["results"]
+    yield from source.get("checks", [])
     yield from source["reference"].values()
 
 
 def main():
     source = json.loads(SOURCE.read_text())
     for item in inputs(source):
-        if "url" not in item and "repo" not in item:
+        # Committed files obtained by hand (ECI reports) are never re-fetched.
+        if "obtained" in item or ("url" not in item and "repo" not in item):
             continue
         path = Path(item["path"])
         if path.exists() and sha256(path) == item["sha256"]:

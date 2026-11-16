@@ -3,7 +3,7 @@
     "data/release/GE_2024.csv.gz": {
       "rows": 8901,
       "contests": 542,
-      "sha256": "8b5ee90c3a1af8cb3d9140b67c82e1046c4a7c7f5e242b49591b9c2d8238f446",
+      "sha256": "6925fabe4b1df840ba6abeb839922b76fc661b209ddc43d1b613613866873938",
       "filled_share": {
         "State_Name": 1.0,
         "Assembly_No": 1.0,
@@ -17,7 +17,7 @@
         "Sex": 0.9391,
         "Party": 1.0,
         "Votes": 1.0,
-        "Candidate_Type": 0.939,
+        "Candidate_Type": 0.9391,
         "Valid_Votes": 1.0,
         "Electors": 1.0,
         "Constituency_Name": 1.0,
@@ -55,7 +55,7 @@
     "data/release/AE_2023_2026.csv.gz": {
       "rows": 34198,
       "contests": 2779,
-      "sha256": "26d2911035ca4665ab3bc4bed23abda961bcfc1384fa094e94a55cf541efd940",
+      "sha256": "f449ea1c72c86daf7a9d2bda53be4e2bac115330c295609bdc2a021cdc8850e3",
       "filled_share": {
         "State_Name": 1.0,
         "Assembly_No": 0.9718,
@@ -66,19 +66,19 @@
         "Poll_No": 1.0,
         "Position": 1.0,
         "Candidate": 1.0,
-        "Sex": 0.0721,
+        "Sex": 0.9187,
         "Party": 1.0,
         "Votes": 0.9997,
-        "Age": 0.0721,
-        "Candidate_Type": 0.0721,
+        "Age": 0.9187,
+        "Candidate_Type": 0.9187,
         "Valid_Votes": 0.9997,
-        "Electors": 0.0767,
+        "Electors": 0.9997,
         "Constituency_Name": 1.0,
-        "Constituency_Type": 0.947,
+        "Constituency_Type": 1.0,
         "District_Name": 0.8721,
         "Sub_Region": 0.8508,
         "N_Cand": 1.0,
-        "Turnout_Percentage": 0.0767,
+        "Turnout_Percentage": 0.9997,
         "Vote_Share_Percentage": 0.9997,
         "Deposit_Lost": 0.9187,
         "Margin": 0.9997,
@@ -86,7 +86,7 @@
         "ENOP": 0.0,
         "pid": 0.0,
         "Party_Type_TCPD": 0.0,
-        "Party_ID": 0.9045,
+        "Party_ID": 0.9003,
         "last_poll": 0.0,
         "Contested": 0.0,
         "Last_Party": 0.0,
@@ -106,8 +106,11 @@
         "Election_Type": 1.0
       }
     },
+    "data/release/party_matches.csv": {
+      "sha256": "418c0474224306a9683250e9695868285b1c4a4650aff292469dc8ea39c931f0"
+    },
     "data/release/parties_not_in_ppi.csv": {
-      "sha256": "319b572b05fa395854d724857bf66377056b1047d5c88ef02c8d631d0275fa62"
+      "sha256": "7eaabcfafb85ed22e4e43e5feb6512c5e2275429f212bbc749401dde10dc8ffb"
     }
   }
 }

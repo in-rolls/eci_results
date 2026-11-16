@@ -3,7 +3,9 @@
 Every candidate's votes in the Lok Sabha election of 2024 and the state assembly
 elections from November 2023 to May 2026, in the column layout of TCPD's Lok
 Dhaba files, so they can be appended to TCPD's data without reshaping. The
-results are the Election Commission of India's (ECI).
+results are the Election Commission of India's (ECI) official statistical
+reports, which are committed here along with the code that turns them into
+TCPD's layout.
 
 The Trivedi Centre for Political Data (TCPD) at Ashoka University publishes the
 standard candidate-level files for Indian elections, `All_States_GE` and
@@ -78,7 +80,6 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 | State Assembly Election | Assam | 2026 | 126 | 722 |
 | State Assembly Election | Bihar | 2025 | 243 | 2,616 |
 | State Assembly Election | Chhattisgarh | 2023 | 90 | 1,181 |
-| State Assembly Election | Delhi | 2025 | 70 | 699 |
 | State Assembly Election | Haryana | 2024 | 90 | 1,031 |
 | State Assembly Election | Jammu & Kashmir | 2024 | 90 | 873 |
 | State Assembly Election | Jharkhand | 2024 | 81 | 1,211 |
@@ -86,6 +87,7 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 | State Assembly Election | Madhya Pradesh | 2023 | 230 | 2,534 |
 | State Assembly Election | Maharashtra | 2024 | 288 | 4,136 |
 | State Assembly Election | Mizoram | 2023 | 40 | 174 |
+| State Assembly Election | NCT of Delhi | 2025 | 70 | 699 |
 | State Assembly Election | Odisha | 2024 | 147 | 1,285 |
 | State Assembly Election | Puducherry | 2026 | 30 | 294 |
 | State Assembly Election | Rajasthan | 2023 | 199 | 1,863 |
@@ -96,8 +98,8 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 | State Assembly Election | West Bengal | 2026 | 294 | 2,926 |
 <!-- coverage:end -->
 
-Karanpur (Rajasthan, seat 3) appears under 2024 because its 2023 poll was
-adjourned to January 2024 after a candidate died. By-elections are not covered.
+Karanpur (Rajasthan, seat 3) is dated January 2024: ECI's 2023 report includes
+it, but its poll was adjourned to 5 January 2024 after a candidate died. By-elections are not covered.
 Surat (Lok Sabha 2024) is missing because its candidate was elected unopposed
 and ECI's report leaves it out.
 
@@ -110,11 +112,12 @@ column filled, by file.
 | Columns | Filled from |
 |---|---|
 | `Candidate`, `Votes`, `Constituency_No`, `Constituency_Name` | The source. |
-| `Sex`, `Age`, `Candidate_Type`, `Electors`, `Turnout_Percentage` | ECI's statistical reports, where the source is one: Lok Sabha 2024, Mizoram and Telangana 2023. The results website does not publish them. |
+| `Sex`, `Age`, `Candidate_Type`, `Electors`, `Turnout_Percentage` | ECI's statistical reports. Empty for Arunachal Pradesh's ten seats won unopposed, which the report leaves out. |
 | `Position`, `Valid_Votes`, `N_Cand`, `Vote_Share_Percentage`, `Margin`, `Margin_Percentage`, `Deposit_Lost` | TCPD's rules, recovered from TCPD's own rows (below). |
-| `Constituency_Type`, `Sub_Region`, `District_Name`, `DelimID` | The seat's latest election in TCPD's files. Empty for Assam, Jammu and Kashmir and Ladakh, whose seats were redrawn in 2022 and 2023. |
+| `Constituency_Type` | ECI's report, which marks reserved seats in their names ("Hachhek (ST)"). The build stops if it disagrees with TCPD's type for the same seat. For the Lok Sabha, TCPD's 2019 type, empty for Assam, Jammu and Kashmir and Ladakh. |
+| `Sub_Region`, `District_Name`, `DelimID` | The seat's latest election in TCPD's files. Empty for Assam, Jammu and Kashmir and Ladakh, whose seats were redrawn in 2022 and 2023. |
 | `Assembly_No` | TCPD's previous number plus one; the 2024 Lok Sabha is the 18th. Empty for Jammu and Kashmir's first assembly as a Union Territory. |
-| `Party`, `Party_ID` | TCPD's party list (TCPD-PPI, 1962 to 2021). `Party` is the label TCPD's rows print for that party: CPM, not CPI(M). ECI names that PPI spells differently are matched in [`data/party_aliases.csv`](data/party_aliases.csv), each checked by hand. Parties founded after 2021, such as Jan Suraaj and Tamilaga Vettri Kazhagam, keep ECI's name and have no `Party_ID`; [`parties_not_in_ppi.csv`](data/release/parties_not_in_ppi.csv) lists them. |
+| `Party`, `Party_ID` | TCPD's party list (TCPD-PPI, 1962 to 2021). `Party` is the label TCPD's rows print for that party: CPM, not CPI(M). Labels are matched to PPI's abbreviations exactly first, then with punctuation and then case ignored (`JnP` is Jana Sena, `JNP` Janata Party); a label several parties share goes to the one PPI records in that state. [`party_matches.csv`](data/release/party_matches.csv) lists every label, its match and how it was made; [`data/party_aliases.csv`](data/party_aliases.csv) holds matches checked by hand. Parties founded after 2021, such as Jan Suraaj (`JNSRJP`) and Tamilaga Vettri Kazhagam (`TVK`), keep ECI's abbreviation and have no `Party_ID`; [`parties_not_in_ppi.csv`](data/release/parties_not_in_ppi.csv) lists them. |
 | `ENOP` | Empty. No formula over TCPD's vote columns reproduces TCPD's values: the effective number of candidates is within 0.05 of TCPD's figure in only 72% of contests. |
 | `Party_Type_TCPD` | Empty. It records a party's ECI recognition at each election, which PPI does not carry. |
 | `pid` and the columns built on it (`last_poll`, `Contested`, `Last_Party`, `Last_Party_ID`, `Last_Constituency_Name`, `Same_Constituency`, `Same_Party`, `No_Terms`, `Turncoat`, `Incumbent`, `Recontest`); `MyNeta_education`; `TCPD_Prof_*` | Empty. They need TCPD's linking of candidates across elections, or sources other than ECI's results. |
@@ -146,40 +149,48 @@ Each rule reproduces TCPD's value for at least 99.97% of rows
 - Lok Sabha `Valid_Votes` less NOTA equals ECI's valid votes in every seat;
 - no two rows of a seat share a `Position`.
 
-Seats won by party match ECI's declared results in every election we checked,
-including the 2024 Lok Sabha (BJP 240 with Surat, INC 99, SP 37, AITC 29, DMK
-22) and all five assemblies of 2023.
+Seats won by party match ECI's declared results in every election, including
+the 2024 Lok Sabha (BJP 240 with Surat, INC 99, SP 37, AITC 29, DMK 22).
 
-## Sources
+## Sources and raw data
 
-[`data/source.json`](data/source.json) pins every input by URL and SHA-256.
+Every input is committed under [`data/raw/`](data/raw/) and pinned by SHA-256
+in [`data/source.json`](data/source.json).
 
-| Elections | Source |
-|---|---|
-| Lok Sabha 2024 | ECI statistical report 33, "Constituency Wise Detailed Result", as copied into [in-rolls/wasted_votes](https://github.com/in-rolls/wasted_votes). |
-| Mizoram, Telangana 2023 | ECI statistical report "10 - Detailed Results", from Internet Archive captures (Telangana's of OpenCity's mirror). |
-| Rajasthan, Madhya Pradesh, Chhattisgarh 2023 | [azadecon/assembly_elections_2023](https://github.com/azadecon/assembly_elections_2023) (GPL-3.0), scraped from ECI's results website on counting day. |
-| Karanpur (Rajasthan) 2024; Andhra Pradesh, Odisha, Arunachal Pradesh, Sikkim 2024 | ECI's results website as archived by the Internet Archive. The pages are committed in [`data/wayback/`](data/wayback/); [`parse_wayback.py`](src/eci_results/parse_wayback.py) checks that each shows the final counting round, a NOTA row and a matching total. |
-| Haryana, Jharkhand, Jammu and Kashmir, Maharashtra 2024; Bihar, Delhi 2025; Assam, Kerala, Puducherry, Tamil Nadu, West Bengal 2026 | [thecont1/india-votes-data](https://github.com/thecont1/india-votes-data) (MIT), scraped from ECI's results website. |
+- [`data/raw/eci_reports/`](data/raw/eci_reports/): ECI's statistical reports,
+  table "10 - Detailed Results", in xlsx and pdf, for every assembly election,
+  and report 33 for the 2024 Lok Sabha. eci.gov.in refuses this repository's
+  requests, so Priyadarshi Amar downloaded the 2023-2026 assembly reports on
+  16 November 2026; `MANIFEST_*.csv` and `fetch_log.jsonl` record each file's
+  URL, SHA-256, server date and retrieval time. Mizoram and Telangana 2023
+  come from Internet Archive captures, and the Lok Sabha report from
+  [in-rolls/wasted_votes](https://github.com/in-rolls/wasted_votes).
+- [`data/raw/wayback/`](data/raw/wayback/): ECI's results website as archived by
+  the Internet Archive, fetched by
+  [`fetch_wayback.py`](src/eci_results/fetch_wayback.py) and parsed by
+  [`parse_wayback.py`](src/eci_results/parse_wayback.py). They supply
+  Arunachal Pradesh's ten seats won unopposed, which the report leaves out.
+- [`data/raw/scrapes/`](data/raw/scrapes/): two earlier scrapes of the results
+  website, [thecont1/india-votes-data](https://github.com/thecont1/india-votes-data)
+  (MIT) and [azadecon/assembly_elections_2023](https://github.com/azadecon/assembly_elections_2023)
+  (GPL-3.0), each with its license. They are used only to check the reports.
 
-ECI's statistical reports are the official count. For Rajasthan, Madhya Pradesh
-and Chhattisgarh they could not be obtained: eci.gov.in refuses automated and
-many foreign requests, and the Internet Archive holds only its refusals. The
-counting-day scrape used instead matches ECI's report exactly in 154 of the
-159 Mizoram and Telangana seats where both exist, with the same candidates in
-every seat. The largest difference in a seat's total is 774 votes
-([`scrape_check.csv`](data/release/scrape_check.csv)).
+ECI's later reports and its counting-day results website disagree in a few
+seats. Of the 2,768 assembly seats in both, 2,746 are identical in every vote
+count, NOTA included. All 2,768 list the same number of candidates, and in all
+2,522 seats where both sources' winning party can be matched to TCPD's party
+list, it is the same party. The largest difference in a seat's total is 3,660
+votes, in Andhra Pradesh
+([`scrape_check.csv`](data/release/scrape_check.csv), `make validate`).
 
-TCPD's files and TCPD-PPI are used as references and not redistributed. They
-supply the seat facts and party labels and were the basis for recovering
-TCPD's rules.
+TCPD's files and TCPD-PPI are not redistributed. `make fetch` downloads them
+into `data/reference/`; they supply seat facts and party labels and are the
+basis for recovering TCPD's rules.
 
 ## Open work
 
 Contributions are welcome on any of these.
 
-- ECI's statistical reports for Rajasthan, Madhya Pradesh and Chhattisgarh
-  2023, which would replace the counting-day scrape.
 - By-elections since 2023.
 - `Party_Type_TCPD`, from ECI's notifications of recognized parties for each
   election.
@@ -195,14 +206,14 @@ analysis past 2023.
 ## Rebuild
 
 ```
-make fetch      # download inputs and check their SHA-256
+make fetch      # download TCPD's reference files; check every input's SHA-256
 make build      # parse archived pages; write data/release and MANIFEST.json
 make validate   # recompute TCPD's rules on TCPD's rows; compare scrape and report
 make test
 ```
 
 `make wayback` fetches archived pages again. It is slow, and the pages are
-already committed.
+already committed. ECI's reports cannot be fetched by script.
 
 ## Citation and terms
 

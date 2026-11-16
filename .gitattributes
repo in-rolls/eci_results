@@ -1,0 +1,2 @@
+# Raw inputs are pinned by SHA-256: store them byte for byte.
+data/raw/** -text

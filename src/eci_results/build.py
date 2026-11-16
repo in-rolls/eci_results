@@ -101,7 +101,17 @@ def carry_assembly(frame, tcpd, state):
     )
     if state not in REDRAWN:
         for col in seats.columns.drop(["Assembly_No", "Constituency_Name"]):
-            frame[col] = frame["Constituency_No"].map(seats[col])
+            carried = frame["Constituency_No"].map(seats[col])
+            if col == "Constituency_Type" and col in frame:
+                # ECI's report prints the reservation; it must agree with TCPD's.
+                differ = frame[col].ne(carried) & carried.notna()
+                if differ.any():
+                    seats_off = sorted(frame.loc[differ, "Constituency_No"].unique())
+                    raise SystemExit(
+                        f"{state}: seat type differs from TCPD in {seats_off}"
+                    )
+                continue
+            frame[col] = carried
         # Sources without seat names (the azadecon scrape) take TCPD's.
         named = frame["Constituency_Name"].fillna(
             frame["Constituency_No"].map(seats["Constituency_Name"])
@@ -172,42 +182,97 @@ def carry_lok_sabha(frame, tcpd):
     return frame
 
 
-def party_lookup(ppi, tcpd):
-    """Map party names and abbreviations to TCPD's label and Party_ID.
+def compact(text):
+    """Abbreviation key: punctuation and spaces dropped, case kept."""
+    return re.sub(r"[^A-Za-z0-9]", "", str(text))
 
-    The label is the one TCPD's own 2014-2023 rows print most often for the
-    Party_ID (CPM, not PPI's CPIM), else PPI's most frequent abbreviation.
-    data/party_aliases.csv holds checked matches where ECI's name differs
-    from PPI's; parties founded after PPI's 2021 cutoff stay unmatched.
+
+TIERS = [
+    ("exact", str),
+    ("compact", compact),
+    ("any case", lambda t: compact(t).upper()),
+]
+
+
+def party_lookup(ppi, tcpd):
+    """Everything needed to match a printed party label to a TCPD Party_ID.
+
+    Labels are TCPD's own printed label for each Party_ID (CPM, not PPI's
+    CPIM). Candidates come from PPI's abbreviations at three strictness
+    levels (TIERS) and from PPI's names; data/party_aliases.csv holds checked
+    matches that override them.
     """
-    ppi = ppi[ppi["Party_ID"].notna()].sort_values("Last_Year")
+    ppi = ppi[ppi["Party_ID"].notna()]
     recent = pd.concat(tcpd.values())
     recent = recent[recent["Year"].between(2014, 2023) & recent["Party_ID"].notna()]
     printed = recent.groupby("Party_ID")["Party"].agg(lambda s: s.mode().iloc[0])
     label = ppi.drop_duplicates("Party_ID", keep="last").set_index("Party_ID")
     label = printed.reindex(label.index).fillna(label["Frequent_Abbreviation"])
-    by_name, by_abbr = {}, {}
-    for row in ppi.itertuples(index=False):
-        value = (label[row.Party_ID], int(row.Party_ID))
-        by_name[key(row.Party_Name)] = value
-        for abbr in str(row.Abbreviations).split("|"):
-            by_abbr[key(abbr)] = value
+    abbrs = [
+        (a, pid)
+        for text, pid in zip(ppi["Abbreviations"], ppi["Party_ID"])
+        for a in str(text).split("|")
+    ]
+    index = {}
+    for tier, norm in TIERS:
+        table = pd.DataFrame([(norm(a), pid) for a, pid in abbrs], columns=["k", "id"])
+        index[tier] = table.drop_duplicates().groupby("k")["id"].agg(list).to_dict()
+    names = pd.DataFrame({"k": ppi["Party_Name"].map(key), "id": ppi["Party_ID"]})
+    index["name"] = names.drop_duplicates().groupby("k")["id"].agg(list).to_dict()
     aliases = pd.read_csv(ALIASES)
-    for name, party_id in zip(aliases["source_name"], aliases["Party_ID"]):
-        by_name[key(name)] = (label[party_id], int(party_id))
-    return by_name, by_abbr
+    return {
+        "label": label.to_dict(),
+        "alias": dict(zip(aliases["source_name"].map(key), aliases["Party_ID"])),
+        "index": index,
+        "states": ppi.groupby("Party_ID")["State_Name"].agg(set).to_dict(),
+        "size": recent["Party_ID"].value_counts().to_dict(),
+    }
 
 
-def map_parties(frame, by_name, by_abbr):
-    label = frame["Party_Source"]
-    ind = label.str.upper().isin(["IND", "INDEPENDENT"])
-    nota = label.eq("NOTA")
-    keys = label.map(key)
-    found = keys.map(by_name).fillna(keys.map(by_abbr))
-    frame["Party"] = found.map(lambda v: v[0], na_action="ignore").fillna(label)
-    frame["Party_ID"] = found.map(lambda v: v[1], na_action="ignore")
-    frame.loc[ind, ["Party", "Party_ID"]] = ["IND", IND_ID]
-    frame.loc[nota, ["Party", "Party_ID"]] = ["NOTA", NOTA_ID]
+def match_party(text, state, lookup):
+    """(Party_ID, tier, number of candidate parties) for one printed label."""
+    alias = lookup["alias"].get(key(text))
+    if alias is not None:
+        return alias, "alias", 1
+    tiers = [(t, norm(text)) for t, norm in TIERS] + [("name", key(text))]
+    for tier, k in tiers:
+        found = lookup["index"][tier].get(k)
+        if not found:
+            continue
+        # Prefer a party PPI records in this state, then the more common one.
+        best = max(
+            found,
+            key=lambda pid: (
+                state in lookup["states"].get(pid, ()),
+                lookup["size"].get(pid, 0),
+            ),
+        )
+        return best, tier, len(found)
+    return None, "unmatched", 0
+
+
+def map_parties(frame, lookup):
+    source = frame["Party_Source"].astype(str)
+    pairs = pd.DataFrame({"text": source, "state": frame["State_Name"]})
+    matches = {
+        (t, st): match_party(t, st, lookup)
+        for t, st in pairs.drop_duplicates().itertuples(index=False)
+    }
+    found = [matches[(t, st)] for t, st in zip(pairs["text"], pairs["state"])]
+    frame["Party_ID"] = pd.Series(
+        [f[0] for f in found], index=frame.index, dtype="float"
+    )
+    frame["Party_Match"] = [f[1] for f in found]
+    frame["Party_Candidates"] = [f[2] for f in found]
+    frame["Party"] = frame["Party_ID"].map(lookup["label"]).fillna(source)
+    ind = source.str.upper().isin(["IND", "INDEPENDENT"])
+    nota = source.eq("NOTA")
+    frame.loc[ind, ["Party", "Party_ID", "Party_Match"]] = [
+        "IND",
+        IND_ID,
+        "independent",
+    ]
+    frame.loc[nota, ["Party", "Party_ID", "Party_Match"]] = ["NOTA", NOTA_ID, "nota"]
     return frame
 
 
@@ -215,12 +280,18 @@ def build_election(item, tcpd, parties, numbers):
     frame = READERS[item["format"]](check(item))
     if frame["State_Name"].isna().all():
         frame["State_Name"] = item["state"]
+    if "only_seats" in item:
+        frame = frame[frame["Constituency_No"].isin(item["only_seats"])].copy()
     if item["election"] == "lok_sabha":
         frame = carry_lok_sabha(number_lok_sabha(frame, numbers, tcpd), tcpd)
     else:
         frame = carry_assembly(frame, tcpd, item["state"])
-    frame = map_parties(frame, *parties)
+    frame = map_parties(frame, parties)
     frame["Year"], frame["month"], frame["Poll_No"] = item["year"], item["month"], 0
+    # A seat polled on another date (Karanpur, adjourned to January 2024).
+    for seat, date in item.get("seat_dates", {}).items():
+        here = frame["Constituency_No"].eq(int(seat))
+        frame.loc[here, "Year"], frame.loc[here, "month"] = date["year"], date["month"]
     frame["Election_Type"] = ELECTION_TYPE[item["election"]]
     for col in ["Electors", "Age", "Assembly_No"]:
         frame[col] = pd.to_numeric(frame.get(col), errors="coerce")
@@ -333,6 +404,28 @@ def main():
             "sha256": sha256(path),
             "filled_share": table.notna().mean().round(4).to_dict(),
         }
+    audit = (
+        pd.concat(tables.values())
+        .query("Party_Match not in ['independent', 'nota']")
+        .groupby(
+            [
+                "Party_Source",
+                "State_Name",
+                "Party",
+                "Party_ID",
+                "Party_Match",
+                "Party_Candidates",
+            ],
+            dropna=False,
+        )
+        .size()
+        .rename("candidates")
+        .reset_index()
+        .sort_values("candidates", ascending=False)
+    )
+    audit_out = RELEASE / "party_matches.csv"
+    audit.to_csv(audit_out, index=False)
+    manifest["files"][str(audit_out)] = {"sha256": sha256(audit_out)}
     parties_out = RELEASE / "parties_not_in_ppi.csv"
     pd.concat(unmatched).sort_values("candidates", ascending=False).to_csv(
         parties_out, index=False

@@ -25,7 +25,7 @@ from tenacity import (
     wait_exponential,
 )
 
-RAW = Path("data/wayback")
+RAW = Path("data/raw/wayback")
 ELECTIONS = [
     # folder on results.eci.gov.in, ECI state code, seats, state
     ("AcResultGen2ndJune2024", "S02", range(1, 61), "Arunachal Pradesh"),
