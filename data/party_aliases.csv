@@ -1,0 +1,12 @@
+source_name,Party_ID,ppi_name,reason
+Socialist Unity Centre Of India (COMMUNIST),8082,SOCIALIST UNITY CENTRE,ECI's full name; TCPD rows label it SUCI
+Communist Party of India (Marxist),14635,COMMUNIST MARXIST PARTY OF INDIA,word order differs in PPI; TCPD rows label it CPM
+Communist Party of India  (Marxist),14635,COMMUNIST MARXIST PARTY OF INDIA,same party with a doubled space in the source
+Communist Party of India,2444,Communist Part of India,typo in PPI's name
+All India Majlis-E-Ittehadul Muslimeen,706,All India Majlis-E Ithehad-Ul Muslimeen,transliteration differs
+Jammu & Kashmir National Conference,11089,J & K NATIONAL CONFERENCE,abbreviated in PPI
+Indian National Lok Dal,3863,Indian National Lok Da,typo in PPI's name
+Desa Makkal Munnetrak Kazhagam,2939,Desa Makkal Munnetrak Kazhgam,typo in PPI's name
+Bhartiya Lokmat Rashtrawadi Party,1990,Bhartiya Lokmat Rashtrwadi Party,spelling differs
+Peasants And Workers Party of India,12019,PEASANT WORKER PARTY,PPI's short name; abbreviation PWPI in both
+BHRS,8284,Telangana Rashtra Samithi,"ECI report 33 abbreviation for Bharat Rashtra Samithi, the TRS renamed in 2022; 17 candidates, one per Telangana seat"

@@ -1,0 +1,209 @@
+{
+  "results": [
+    {
+      "election": "lok_sabha",
+      "year": 2024,
+      "month": 6,
+      "format": "eci_report",
+      "state": "All_States",
+      "path": "data/raw/eci/ge_2024_constituency_wise_detailed_result.csv",
+      "url": "https://raw.githubusercontent.com/in-rolls/wasted_votes/704474a/33-Constituency-Wise-Detailed-Result.csv",
+      "dataset": "ECI Statistical Report, General Election to Lok Sabha 2024, report 33: Constituency Wise Detailed Result",
+      "note": "ECI statistical report as copied into in-rolls/wasted_votes@704474a (2025-08-23); the original ECI download URL was not recorded. GitHub's raw download has LF line endings; a CRLF checkout of the same commit hashes to 750fc0f2..., identical once CRs are removed.",
+      "sha256": "09739d5f3dc204286f25a596879bc469df330934ba21424920e13ba2b3d64b9a"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 10,
+      "format": "india_votes_data",
+      "state": "Haryana",
+      "path": "data/raw/india_votes_data/2024Assembly-HR.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2024Assembly-HR.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "c90b3873d959f3c570e43dde91405e6c58517629b5f8ff5f3fbea5fda5b968b6"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 11,
+      "format": "india_votes_data",
+      "state": "Jharkhand",
+      "path": "data/raw/india_votes_data/2024Assembly-JH.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2024Assembly-JH.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "380e8c06592a89015846e862b596ecbae1ba2adb213d621230a7fd10b4d8ea20"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 10,
+      "format": "india_votes_data",
+      "state": "Jammu_&_Kashmir",
+      "path": "data/raw/india_votes_data/2024Assembly-JK.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2024Assembly-JK.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "4ac9d0c5c79b74c3ccfe6e3bde828074f9918c20bbbdbdc5f70f9fa0f210d1c0"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 11,
+      "format": "india_votes_data",
+      "state": "Maharashtra",
+      "path": "data/raw/india_votes_data/2024Assembly-MH.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2024Assembly-MH.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "16aaaf99540945d460b49914d43109b519643574c2a001d11e8500ef511dfda3"
+    },
+    {
+      "election": "assembly",
+      "year": 2025,
+      "month": 11,
+      "format": "india_votes_data",
+      "state": "Bihar",
+      "path": "data/raw/india_votes_data/2025Assembly-BR.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2025Assembly-BR.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "1115ac0f0511e19ead07074c70616b521e84dd0d5868e294e5db430bb4f760e4"
+    },
+    {
+      "election": "assembly",
+      "year": 2025,
+      "month": 2,
+      "format": "india_votes_data",
+      "state": "Delhi",
+      "path": "data/raw/india_votes_data/2025Assembly-DL.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2025Assembly-DL.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "e3b85e44d85e2b137960f5517967bff2a3f96f3fb9156ad98a0c26206bca9924"
+    },
+    {
+      "election": "assembly",
+      "year": 2026,
+      "month": 5,
+      "format": "india_votes_data",
+      "state": "Assam",
+      "path": "data/raw/india_votes_data/2026Assembly-AS.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2026Assembly-AS.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "cd55f652433f22e4ee70f3615ab5d979871eed7cac8af90193fcd1256bac3150"
+    },
+    {
+      "election": "assembly",
+      "year": 2026,
+      "month": 5,
+      "format": "india_votes_data",
+      "state": "Kerala",
+      "path": "data/raw/india_votes_data/2026Assembly-KL.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2026Assembly-KL.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "69d940dd681fa8c540c86bceba9a0d67c8c66d5b7640ded0479e1c9e2902cb7c"
+    },
+    {
+      "election": "assembly",
+      "year": 2026,
+      "month": 5,
+      "format": "india_votes_data",
+      "state": "Puducherry",
+      "path": "data/raw/india_votes_data/2026Assembly-PY.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2026Assembly-PY.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "7dee71687c8a198a1311cecd66a9ee6a8eba65d4a28913a9fbe45b1fd7b6353f"
+    },
+    {
+      "election": "assembly",
+      "year": 2026,
+      "month": 5,
+      "format": "india_votes_data",
+      "state": "Tamil_Nadu",
+      "path": "data/raw/india_votes_data/2026Assembly-TN.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2026Assembly-TN.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "eb0302e0b38fc9ec0a902a9242742a6ff92b8a74b568313d9fc61737041a86b5"
+    },
+    {
+      "election": "assembly",
+      "year": 2026,
+      "month": 5,
+      "format": "india_votes_data",
+      "state": "West_Bengal",
+      "path": "data/raw/india_votes_data/2026Assembly-WB.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/data/csv/2026Assembly-WB.csv",
+      "dataset": "thecont1/india-votes-data (MIT), scraped from results.eci.gov.in",
+      "sha256": "bcc9163435d5b09ffa007cd8208f542aaa027ed94a32c54b37f7d3ea17b36d04"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 6,
+      "format": "wayback",
+      "state": "Andhra_Pradesh",
+      "path": "data/build/wayback/2024Assembly-AP.csv",
+      "dataset": "results.eci.gov.in constituency pages as archived by the Internet Archive; raw pages in data/wayback/, parsed by parse_wayback.py",
+      "sha256": "ca8d4bb9890713269e63618217731cb02b9715578e8ed433efdfdc2ee09ff183"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 6,
+      "format": "wayback",
+      "state": "Odisha",
+      "path": "data/build/wayback/2024Assembly-OD.csv",
+      "dataset": "results.eci.gov.in constituency pages as archived by the Internet Archive; raw pages in data/wayback/, parsed by parse_wayback.py",
+      "sha256": "5d2c3eaa2400a87e4465b6dd3dd848464944d9690b85f6b6b854519f7f5b29b0"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 6,
+      "format": "wayback",
+      "state": "Arunachal_Pradesh",
+      "path": "data/build/wayback/2024Assembly-AR.csv",
+      "dataset": "results.eci.gov.in constituency pages as archived by the Internet Archive; raw pages in data/wayback/, parsed by parse_wayback.py",
+      "sha256": "dab7bdca4733076771d945f76d509cb64bb28b609ad4d9f70cc87a377092c2a2"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 6,
+      "format": "wayback",
+      "state": "Sikkim",
+      "path": "data/build/wayback/2024Assembly-SK.csv",
+      "dataset": "results.eci.gov.in constituency pages as archived by the Internet Archive; raw pages in data/wayback/, parsed by parse_wayback.py",
+      "sha256": "0607290913aa4da1b88b228bf2cbcb01b00de457729b6c707eb1a0dd52c17a4d"
+    }
+  ],
+  "reference": {
+    "tcpd_GE": {
+      "path": "data/raw/tcpd/TCPD_GE_All_States_2026-7-26.csv.gz",
+      "url": "https://raw.githubusercontent.com/Ayush12358/electoral-reservation/8e9a5c6dadcc6bf84abcf74d83e0bb24b90981af/data/TCPD_GE_All_States_2026-7-26.csv.gz",
+      "official_url": "https://lokdhaba.ashoka.edu.in/downloads/All_States/All_States_GE.csv.gz",
+      "dataset": "TCPD Indian Elections Data v2.0 (Lok Dhaba)",
+      "downloaded_from_tcpd": "2026-07-26 (date in the mirror's file name)",
+      "sha256": "0cd0c701d9a229b6c638e90db49be40463dc532957433e770942942087e2039d",
+      "rows": 91669
+    },
+    "tcpd_AE": {
+      "path": "data/raw/tcpd/TCPD_AE_All_States_2026-7-26.csv.gz",
+      "url": "https://raw.githubusercontent.com/Ayush12358/electoral-reservation/8e9a5c6dadcc6bf84abcf74d83e0bb24b90981af/data/TCPD_AE_All_States_2026-7-26.csv.gz",
+      "official_url": "https://lokdhaba.ashoka.edu.in/downloads/All_States/All_States_AE.csv.gz",
+      "dataset": "TCPD Indian Elections Data v2.0 (Lok Dhaba)",
+      "downloaded_from_tcpd": "2026-07-26 (date in the mirror's file name)",
+      "sha256": "6159e090d7d0d0e15531ff76b8429457121d7611b7752864d5123a8d75e01fc7",
+      "rows": 483565
+    },
+    "ppi": {
+      "path": "data/raw/tcpd/TCPD-PPI_1962_2021.csv",
+      "url": "https://raw.githubusercontent.com/tcpd/ppi/87d54660d330ba0fa8990dc7e30d754c2bc8823f/TCPD-PPI_1962_2021.csv",
+      "dataset": "TCPD Political Parties of India Dataset (TCPD-PPI), 1962-2021",
+      "sha256": "72e7e392f9b6e469cd0f47d0923aec020fb4526104769ae3dde38cc23ee117af"
+    },
+    "ls_2024_numbers": {
+      "path": "data/raw/india_votes_data/2024_Parliamentary_Elections_India.csv",
+      "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/archive/2024%20Parliamentary%20Elections%20India.csv",
+      "dataset": "thecont1/india-votes-data (MIT), 2024 Lok Sabha results scraped from results.eci.gov.in. Its 'Constituency ID' keeps only the first digit of ECI's seat number; used only to check the seat numbers taken from report 33's order.",
+      "sha256": "f2ce269e912b2f52da204a469492d95267336831ade4f908469369ccf321e439"
+    }
+  }
+}

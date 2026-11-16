@@ -1,0 +1,17 @@
+file,column,rows,agree_share
+tcpd_GE,Position,17390,1.0
+tcpd_GE,Valid_Votes,17390,1.0
+tcpd_GE,N_Cand,17390,1.0
+tcpd_GE,Vote_Share_Percentage,17390,1.0
+tcpd_GE,Margin,17390,1.0
+tcpd_GE,Margin_Percentage,17390,1.0
+tcpd_GE,Deposit_Lost,17390,1.0
+tcpd_GE,Turnout_Percentage,17390,1.0
+tcpd_AE,Position,88726,1.0
+tcpd_AE,Valid_Votes,88726,1.0
+tcpd_AE,N_Cand,88726,0.9999
+tcpd_AE,Vote_Share_Percentage,88726,0.9997
+tcpd_AE,Margin,88726,1.0
+tcpd_AE,Margin_Percentage,88726,0.9997
+tcpd_AE,Deposit_Lost,88726,1.0
+tcpd_AE,Turnout_Percentage,88726,1.0
