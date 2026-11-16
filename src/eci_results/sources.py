@@ -5,6 +5,8 @@ Party_Source (the party as the source prints it), Votes, and, where the
 source has them, Sex, Age, Candidate_Type and Electors.
 """
 
+from pathlib import Path
+
 import pandas as pd
 
 STATE_CODES = {
@@ -78,7 +80,64 @@ def read_india_votes_data(path):
     return mark_nota(frame)
 
 
+def read_eci_detailed(path):
+    """ECI statistical report "10 - Detailed Results" workbook (assemblies).
+
+    One row per candidate, NOTA included; names carry their ballot serial
+    ("1 Robert Romawia Royte"), which is dropped.
+    """
+    table = pd.read_excel(path, header=None, skiprows=4)
+    table = table[pd.to_numeric(table[1], errors="coerce").notna()]
+    return mark_nota(
+        pd.DataFrame(
+            {
+                "State_Name": table[0].map(tcpd_state),
+                "Constituency_No": table[1].astype(int),
+                "Constituency_Name": table[2]
+                .str.replace(r"\s*\((SC|ST)\)\s*$", "", regex=True)
+                .str.strip()
+                .str.upper(),
+                "Candidate": table[3]
+                .astype(str)
+                .str.replace(r"^\d+\s+", "", regex=True)
+                .str.strip(),
+                "Party_Source": table[7].astype(str).str.strip(),
+                "Votes": pd.to_numeric(table[11], errors="coerce"),
+                "Sex": table[4].astype(str).str.upper().map(SEX),
+                "Age": pd.to_numeric(table[5], errors="coerce"),
+                "Candidate_Type": table[6].astype(str).str.upper().map(CATEGORY),
+                "Electors": pd.to_numeric(table[13], errors="coerce"),
+            }
+        )
+    )
+
+
+def read_azadecon(folder):
+    """azadecon/assembly_elections_2023: one workbook per seat, scraped from
+    results.eci.gov.in on counting day. Each ends with a Total row."""
+    frames = []
+    for path in sorted(Path(folder).glob("*.xlsx")):
+        seat = pd.read_excel(path)
+        seat = seat[seat["s_n"].notna()]
+        frames.append(seat)
+    table = pd.concat(frames, ignore_index=True)
+    return mark_nota(
+        pd.DataFrame(
+            {
+                "State_Name": None,
+                "Constituency_No": table["constituency"].astype(int),
+                "Constituency_Name": pd.NA,
+                "Candidate": table["candidate"].astype(str).str.strip(),
+                "Party_Source": table["party"].astype(str).str.strip(),
+                "Votes": pd.to_numeric(table["total_votes"], errors="coerce"),
+            }
+        )
+    )
+
+
 READERS = {
+    "eci_detailed": read_eci_detailed,
+    "azadecon": read_azadecon,
     "eci_report": read_eci_report,
     "india_votes_data": read_india_votes_data,
     "wayback": read_india_votes_data,

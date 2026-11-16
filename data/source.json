@@ -14,6 +14,87 @@
     },
     {
       "election": "assembly",
+      "year": 2023,
+      "month": 12,
+      "format": "azadecon",
+      "state": "Rajasthan",
+      "path": "data/raw/azadecon/raj",
+      "repo": "azadecon/assembly_elections_2023",
+      "commit": "e601db3ceb832afac22d9edb0367847472872206",
+      "folder": "raj",
+      "suffix": ".xlsx",
+      "dataset": "azadecon/assembly_elections_2023 (GPL-3.0), one workbook per seat scraped from results.eci.gov.in on counting day (3 December 2023); ECI's statistical report for this state was not obtainable, see README",
+      "missing_seats": [
+        3
+      ],
+      "note": "Karanpur (seat 3) polled on 5 January 2024 after its candidate died; it is a separate item.",
+      "sha256": "5f7aac79169b2dfb27c66781790b3c401ecedd341ccf1c73c4cb687af072860b"
+    },
+    {
+      "election": "assembly",
+      "year": 2023,
+      "month": 12,
+      "format": "azadecon",
+      "state": "Madhya_Pradesh",
+      "path": "data/raw/azadecon/mp",
+      "repo": "azadecon/assembly_elections_2023",
+      "commit": "e601db3ceb832afac22d9edb0367847472872206",
+      "folder": "mp",
+      "suffix": ".xlsx",
+      "dataset": "azadecon/assembly_elections_2023 (GPL-3.0), one workbook per seat scraped from results.eci.gov.in on counting day (3 December 2023); ECI's statistical report for this state was not obtainable, see README",
+      "sha256": "62013b616054b67366c36ce9ff858d1597652198a2aa5debe3843d2ea0534267"
+    },
+    {
+      "election": "assembly",
+      "year": 2023,
+      "month": 12,
+      "format": "azadecon",
+      "state": "Chhattisgarh",
+      "path": "data/raw/azadecon/cg",
+      "repo": "azadecon/assembly_elections_2023",
+      "commit": "e601db3ceb832afac22d9edb0367847472872206",
+      "folder": "cg",
+      "suffix": ".xlsx",
+      "dataset": "azadecon/assembly_elections_2023 (GPL-3.0), one workbook per seat scraped from results.eci.gov.in on counting day (3 December 2023); ECI's statistical report for this state was not obtainable, see README",
+      "sha256": "57693e8f9afa340d910a1585f173f4cf3c7a2f01196a53a0aef94075fa962e23"
+    },
+    {
+      "election": "assembly",
+      "year": 2023,
+      "month": 12,
+      "format": "eci_detailed",
+      "state": "Telangana",
+      "path": "data/raw/eci/telangana_2023_detailed_results.xlsx",
+      "url": "https://web.archive.org/web/20261007215241id_/https://data.opencity.in/dataset/62ad1510-22c4-4f9f-a22c-aa5391ec89b6/resource/3632e39e-63c6-4d2f-b240-5decb915f4d0/download/detailed_results.xlsx",
+      "dataset": "ECI statistical report, Telangana 2023, '10 - Detailed Results', as mirrored by OpenCity and archived by the Internet Archive",
+      "sha256": "1780d1afbbddaa0657de619fc0babb88bb516f20f23f3f14ac5e0c8fb73557fe"
+    },
+    {
+      "election": "assembly",
+      "year": 2023,
+      "month": 12,
+      "format": "eci_detailed",
+      "state": "Mizoram",
+      "path": "data/raw/eci/mizoram_2023_detailed_results.xlsx",
+      "url": "https://web.archive.org/web/20240202080643id_/https://www.eci.gov.in/eci-backend/public/all_files/full-statistical-reports/mizoram/2023/Detailed_Results.xlsx",
+      "dataset": "ECI statistical report, Mizoram 2023, '10 - Detailed Results', archived by the Internet Archive",
+      "sha256": "40ec038e6d69a5f2401c01260b1930b73860e41f940ae175866245f1946a04a6"
+    },
+    {
+      "election": "assembly",
+      "year": 2024,
+      "month": 1,
+      "format": "wayback",
+      "state": "Rajasthan",
+      "only_seats": [
+        3
+      ],
+      "path": "data/build/wayback/2024Assembly-RJ.csv",
+      "dataset": "Karanpur (Rajasthan 3), the 2023 general election's adjourned poll of 5 January 2024, from results.eci.gov.in/AcResultByeJan2024 as archived by the Internet Archive; raw page in data/wayback/",
+      "sha256": "bf2bf8fc4e096c2fe6833c45a1014cb2fe5f4615869d862642a74012aa06e4e4"
+    },
+    {
+      "election": "assembly",
       "year": 2024,
       "month": 10,
       "format": "india_votes_data",
@@ -204,6 +285,24 @@
       "url": "https://raw.githubusercontent.com/thecont1/india-votes-data/7d8cf637f83d223b178d11659103a1f52647367a/archive/2024%20Parliamentary%20Elections%20India.csv",
       "dataset": "thecont1/india-votes-data (MIT), 2024 Lok Sabha results scraped from results.eci.gov.in. Its 'Constituency ID' keeps only the first digit of ECI's seat number; used only to check the seat numbers taken from report 33's order.",
       "sha256": "f2ce269e912b2f52da204a469492d95267336831ade4f908469369ccf321e439"
+    },
+    "scrape_check_ts": {
+      "path": "data/raw/azadecon/ts",
+      "repo": "azadecon/assembly_elections_2023",
+      "commit": "e601db3ceb832afac22d9edb0367847472872206",
+      "folder": "ts",
+      "suffix": ".xlsx",
+      "dataset": "azadecon scrape for Telangana 2023, used only to measure how far the scrape is from ECI's report (make validate)",
+      "sha256": "d58902e4743fb64acfdd5d36788f8a6f02d18563acc2c79b21c3dc2ca2eca52e"
+    },
+    "scrape_check_mz": {
+      "path": "data/raw/azadecon/mz",
+      "repo": "azadecon/assembly_elections_2023",
+      "commit": "e601db3ceb832afac22d9edb0367847472872206",
+      "folder": "mz",
+      "suffix": ".xlsx",
+      "dataset": "azadecon scrape for Mizoram 2023, used only to measure how far the scrape is from ECI's report (make validate)",
+      "sha256": "f6647b769611a167ea8f5790c2d0f64181c1335b5b4f74cc33a83811e1c1ee5d"
     }
   }
 }

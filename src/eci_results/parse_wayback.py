@@ -23,7 +23,7 @@ from eci_results.fetch_wayback import ELECTIONS, RAW
 EXTRACTED = Path("data/build/wayback")
 CONSTITUENCY = re.compile(r"Assembly Constituency\s*(\d+)\s*-\s*(.+?)\s*\(")
 ROUNDS = re.compile(r"Round,?\s*(\d+)\s*/\s*(\d+)")
-STATE_ABBREVIATIONS = {"S01": "AP", "S02": "AR", "S18": "OD", "S21": "SK"}
+STATE_ABBREVIATIONS = {"S01": "AP", "S02": "AR", "S18": "OD", "S20": "RJ", "S21": "SK"}
 
 
 def number(text):
@@ -101,7 +101,7 @@ def main():
         table.insert(0, "election_year", 2024)
         seats_found = table.constituency_no.nunique()
         print(
-            f"{state}: {seats_found}/{seats} seats, {len(table)} rows, "
+            f"{state}: {seats_found}/{len(seats)} seats, {len(table)} rows, "
             f"{len(failed)} pages failing a check"
         )
         for url, checks, n in failed[:5]:

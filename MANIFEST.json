@@ -52,41 +52,41 @@
         "Election_Type": 1.0
       }
     },
-    "data/release/AE_2024_2026.csv.gz": {
-      "rows": 25465,
-      "contests": 2100,
-      "sha256": "8dbdfd666834c062a69df0d2e5c296ddaeca16f6ce33212f255a80b879e979bd",
+    "data/release/AE_2023_2026.csv.gz": {
+      "rows": 34198,
+      "contests": 2779,
+      "sha256": "26d2911035ca4665ab3bc4bed23abda961bcfc1384fa094e94a55cf541efd940",
       "filled_share": {
         "State_Name": 1.0,
-        "Assembly_No": 0.9622,
+        "Assembly_No": 0.9718,
         "Constituency_No": 1.0,
         "Year": 1.0,
         "month": 1.0,
-        "DelimID": 0.9289,
+        "DelimID": 0.947,
         "Poll_No": 1.0,
         "Position": 1.0,
         "Candidate": 1.0,
-        "Sex": 0.0,
+        "Sex": 0.0721,
         "Party": 1.0,
-        "Votes": 0.9996,
-        "Age": 0.0,
-        "Candidate_Type": 0.0,
-        "Valid_Votes": 0.9996,
-        "Electors": 0.0,
+        "Votes": 0.9997,
+        "Age": 0.0721,
+        "Candidate_Type": 0.0721,
+        "Valid_Votes": 0.9997,
+        "Electors": 0.0767,
         "Constituency_Name": 1.0,
-        "Constituency_Type": 0.9289,
-        "District_Name": 0.8283,
-        "Sub_Region": 0.808,
+        "Constituency_Type": 0.947,
+        "District_Name": 0.8721,
+        "Sub_Region": 0.8508,
         "N_Cand": 1.0,
-        "Turnout_Percentage": 0.0,
-        "Vote_Share_Percentage": 0.9996,
-        "Deposit_Lost": 0.9175,
-        "Margin": 0.9996,
-        "Margin_Percentage": 0.9996,
+        "Turnout_Percentage": 0.0767,
+        "Vote_Share_Percentage": 0.9997,
+        "Deposit_Lost": 0.9187,
+        "Margin": 0.9997,
+        "Margin_Percentage": 0.9997,
         "ENOP": 0.0,
         "pid": 0.0,
         "Party_Type_TCPD": 0.0,
-        "Party_ID": 0.9052,
+        "Party_ID": 0.9045,
         "last_poll": 0.0,
         "Contested": 0.0,
         "Last_Party": 0.0,
@@ -107,7 +107,7 @@
       }
     },
     "data/release/parties_not_in_ppi.csv": {
-      "sha256": "c2d019a89752881f17e8287422a0ebe546aa8c9dc1ada4a24b56c20eb4e6987d"
+      "sha256": "319b572b05fa395854d724857bf66377056b1047d5c88ef02c8d631d0275fa62"
     }
   }
 }

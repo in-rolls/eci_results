@@ -1,8 +1,8 @@
 """Fetch archived ECI constituency result pages from the Wayback Machine.
 
 results.eci.gov.in no longer serves the June 2024 assembly results for
-Andhra Pradesh, Odisha, Arunachal Pradesh and Sikkim, and TCPD stops before
-them. The Internet Archive holds every constituency page of the four. Each page
+Andhra Pradesh, Odisha, Arunachal Pradesh and Sikkim, nor the adjourned
+Karanpur poll of January 2024. The Internet Archive holds every page. Each page
 is fetched once, verbatim, into one gzipped JSONL per state (one line per
 request: url, snapshot, status, fetched_at, html, ok, reason). Rerunning skips
 what is already saved. Nothing here reads the pages; parse_wayback.py does.
@@ -28,10 +28,13 @@ from tenacity import (
 RAW = Path("data/wayback")
 ELECTIONS = [
     # folder on results.eci.gov.in, ECI state code, seats, state
-    ("AcResultGen2ndJune2024", "S02", 60, "Arunachal Pradesh"),
-    ("AcResultGen2ndJune2024", "S21", 32, "Sikkim"),
-    ("AcResultGenJune2024", "S01", 175, "Andhra Pradesh"),
-    ("AcResultGenJune2024", "S18", 147, "Odisha"),
+    ("AcResultGen2ndJune2024", "S02", range(1, 61), "Arunachal Pradesh"),
+    ("AcResultGen2ndJune2024", "S21", range(1, 33), "Sikkim"),
+    ("AcResultGenJune2024", "S01", range(1, 176), "Andhra Pradesh"),
+    ("AcResultGenJune2024", "S18", range(1, 148), "Odisha"),
+    # Karanpur (Rajasthan 3): its 2023 general-election poll was adjourned to
+    # January 2024 and ECI posted the result with that month's by-elections.
+    ("AcResultByeJan2024", "S20", [3], "Rajasthan"),
 ]
 PAGE = "https://results.eci.gov.in/{folder}/Constituencywise{code}{seat}.htm"
 # Some captures are ECI refusing the archive's crawler ("Access Denied", 403);
@@ -97,8 +100,17 @@ def main():
         path = RAW / f"{folder}_{code}.jsonl.gz"
         seen = done_urls(path)
         failures = 0
+        todo = [
+            s
+            for s in seats
+            if PAGE.format(folder=folder, code=code, seat=s) not in seen
+        ]
+        if not todo:
+            # Opening the gzip file to append would add an empty member.
+            print(f"{state}: all {len(seats)} seats already saved")
+            continue
         with gzip.open(path, "at", encoding="utf-8") as out:
-            for seat in range(1, seats + 1):
+            for seat in seats:
                 url = PAGE.format(folder=folder, code=code, seat=seat)
                 if url in seen:
                     continue
@@ -133,7 +145,10 @@ def main():
                 out.flush()
                 failures += not ok
                 time.sleep(PAUSE_SECONDS)
-        print(f"{state}: {seats} seats, {len(seen)} already saved, {failures} failures")
+        saved = len(seen)
+        print(
+            f"{state}: {len(seats)} seats, {saved} already saved, {failures} failures"
+        )
 
 
 if __name__ == "__main__":

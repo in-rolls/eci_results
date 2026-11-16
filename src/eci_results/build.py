@@ -41,7 +41,7 @@ ELECTION_TYPE = {
     "assembly": "State Assembly Election (AE)",
 }
 TCPD_FILE = {"lok_sabha": "tcpd_GE", "assembly": "tcpd_AE"}
-OUTPUT = {"lok_sabha": "GE_2024.csv.gz", "assembly": "AE_2024_2026.csv.gz"}
+OUTPUT = {"lok_sabha": "GE_2024.csv.gz", "assembly": "AE_2023_2026.csv.gz"}
 # TCPD-PPI's IDs for independents and NOTA.
 IND_ID, NOTA_ID = 10809, 5897
 # Seats redrawn since TCPD's last election there: J&K and Ladakh in 2022,
@@ -80,7 +80,7 @@ def last_election(tcpd, state):
     (Andhra Pradesh, 2014) renumbers seats under the same DelimID.
     """
     rows = tcpd[(tcpd["State_Name"] == state) & (tcpd["DelimID"] == 4)]
-    cols = [c for c in SEAT_FACTS + ["Assembly_No"] if c in rows]
+    cols = [c for c in SEAT_FACTS + ["Assembly_No", "Constituency_Name"] if c in rows]
     year = rows["Year"].max()
     latest = rows[rows["Year"] == year].drop_duplicates("Constituency_No")
     seats = latest.set_index("Constituency_No")[cols]
@@ -100,8 +100,13 @@ def carry_assembly(frame, tcpd, state):
         seats["Assembly_No"].max() + 1 if state != "Jammu_&_Kashmir" else pd.NA
     )
     if state not in REDRAWN:
-        for col in seats.columns.drop("Assembly_No"):
+        for col in seats.columns.drop(["Assembly_No", "Constituency_Name"]):
             frame[col] = frame["Constituency_No"].map(seats[col])
+        # Sources without seat names (the azadecon scrape) take TCPD's.
+        named = frame["Constituency_Name"].fillna(
+            frame["Constituency_No"].map(seats["Constituency_Name"])
+        )
+        frame["Constituency_Name"] = named
     return frame
 
 
@@ -208,6 +213,8 @@ def map_parties(frame, by_name, by_abbr):
 
 def build_election(item, tcpd, parties, numbers):
     frame = READERS[item["format"]](check(item))
+    if frame["State_Name"].isna().all():
+        frame["State_Name"] = item["state"]
     if item["election"] == "lok_sabha":
         frame = carry_lok_sabha(number_lok_sabha(frame, numbers, tcpd), tcpd)
     else:
@@ -229,11 +236,17 @@ def gate(frame, item, tcpd):
     # Count seat numbers, not names: Bihar has two seats called Kalyanpur.
     seats = frame.groupby("State_Name")["Constituency_No"].nunique()
     if item["election"] == "assembly":
-        expected = EXPECTED_SEATS.get(item["state"]) or int(
+        top = EXPECTED_SEATS.get(item["state"]) or int(
             last_election(tcpd, item["state"]).index.max()
         )
-        if seats.sum() != expected:
-            raise SystemExit(f"{label}: {seats.sum()} seats, expected {expected}")
+        expected = set(item.get("only_seats") or range(1, top + 1))
+        expected -= set(item.get("missing_seats", []))
+        found = set(frame["Constituency_No"].astype(int))
+        if found != expected:
+            raise SystemExit(
+                f"{label}: missing seats {sorted(expected - found)}, "
+                f"unexpected {sorted(found - expected)}"
+            )
     unnumbered = frame["Constituency_No"].isna().sum()
     if unnumbered:
         missing = frame.loc[frame["Constituency_No"].isna(), "Constituency_Name"]
