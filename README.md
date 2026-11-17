@@ -99,9 +99,42 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 <!-- coverage:end -->
 
 Karanpur (Rajasthan, seat 3) is dated January 2024: ECI's 2023 report includes
-it, but its poll was adjourned to 5 January 2024 after a candidate died. By-elections are not covered.
+it, but its poll was adjourned to 5 January 2024 after a candidate died.
 Surat (Lok Sabha 2024) is missing because its candidate was elected unopposed
-and ECI's report leaves it out.
+and ECI's report leaves it out. By-elections are in a file of their own (below).
+
+## By-elections, 2022 to 2026
+
+[`data/release/byelections_2022_2026.csv`](data/release/byelections_2022_2026.csv)
+has every assembly and Lok Sabha by-election ECI lists from March 2022 to
+October 2026: 170 contests (161 assembly, 9 Lok Sabha), 2,016 rows, one per
+candidate with NOTA as a row of its own. TCPD's files end with the assembly
+by-elections of June 2022 and the Lok Sabha by-elections of 2021; `In_TCPD`
+marks the four contests TCPD already has (Tripura, June 2022).
+[`byelection_cards.csv`](data/release/byelection_cards.csv) has one row per
+contest with the card's own totals, electors, poll date and the reason for the
+by-election (resignation, death, disqualification).
+
+The source is ECI's "index card" for each seat (`make byelections`,
+[`byelections.py`](src/eci_results/byelections.py)). Each card is checked
+against itself: candidates' votes must equal the card's Total row, NOTA and
+electors must be present, and the number of rows must equal the card's count of
+contesting candidates. All 170 pass. Four carry a note:
+
+- Lumla (Arunachal Pradesh, 2023), Soreng-Chakung and Namchi-Singhithang
+  (Sikkim, 2024) were won unopposed: one row each, no votes and no NOTA row.
+- Maniktala (West Bengal, 2024): the candidates' postal votes include 27
+  rejected and NOTA postal ballots, so their votes sum to 114,968 while the
+  card's total valid votes are 114,941. The rows keep the card's figures.
+
+These rows are not yet in TCPD's layout, so they are not appended to
+`AE_2023_2026` or `GE_2024`. `Poll_No` (the by-election's number within the
+house's term) and `Assembly_No` are not set, and parties carry ECI's full names
+(`Party_Source`) rather than TCPD's labels. Position, Valid_Votes, N_Cand,
+Vote_Share_Percentage, Margin, Margin_Percentage, Deposit_Lost and
+Turnout_Percentage follow TCPD's rules. Two 2022 cards record some candidates
+as OBC; OBC is not a category for contesting, so `Candidate_Type` is GEN for
+them and `Category_Source` keeps the card's word.
 
 ## What each column holds
 
@@ -165,6 +198,12 @@ in [`data/source.json`](data/source.json).
   URL, SHA-256, server date and retrieval time. Mizoram and Telangana 2023
   come from Internet Archive captures, and the Lok Sabha report from
   [in-rolls/wasted_votes](https://github.com/in-rolls/wasted_votes).
+- [`data/raw/eci_reports/byelections/`](data/raw/eci_reports/byelections/):
+  ECI's by-election index cards, xlsx and pdf, March 2022 to October 2026,
+  downloaded by Priyadarshi Amar on 17 November 2026 from the "Bye-Election
+  Results" listings of eci.gov.in (2025 on) and old.eci.gov.in (2022 to 2024).
+  `MANIFEST.csv` gives each file's source page, address or file id, SHA-256,
+  server date and retrieval time; `fetch_log.jsonl` has every request.
 - [`data/raw/wayback/`](data/raw/wayback/): ECI's results website as archived by
   the Internet Archive, fetched by
   [`fetch_wayback.py`](src/eci_results/fetch_wayback.py) and parsed by
@@ -191,7 +230,9 @@ basis for recovering TCPD's rules.
 
 Contributions are welcome on any of these.
 
-- By-elections since 2023.
+- By-elections in TCPD's layout: `Poll_No`, `Assembly_No` and TCPD's party
+  labels for the rows in `byelections_2022_2026.csv`, so they can be appended
+  to TCPD's files.
 - `Party_Type_TCPD`, from ECI's notifications of recognized parties for each
   election.
 - How TCPD computes `ENOP`.
@@ -208,6 +249,7 @@ analysis past 2023.
 ```
 make fetch      # download TCPD's reference files; check every input's SHA-256
 make build      # parse archived pages; write data/release and MANIFEST.json
+make byelections  # parse the by-election index cards; write data/release/byelection*.csv
 make validate   # recompute TCPD's rules on TCPD's rows; compare scrape and report
 make test
 ```
