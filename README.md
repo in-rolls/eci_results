@@ -80,6 +80,7 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 | State Assembly Election | Assam | 2026 | 126 | 722 |
 | State Assembly Election | Bihar | 2025 | 243 | 2,616 |
 | State Assembly Election | Chhattisgarh | 2023 | 90 | 1,181 |
+| State Assembly Election | Delhi | 2025 | 70 | 699 |
 | State Assembly Election | Haryana | 2024 | 90 | 1,031 |
 | State Assembly Election | Jammu & Kashmir | 2024 | 90 | 873 |
 | State Assembly Election | Jharkhand | 2024 | 81 | 1,211 |
@@ -87,7 +88,6 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 | State Assembly Election | Madhya Pradesh | 2023 | 230 | 2,534 |
 | State Assembly Election | Maharashtra | 2024 | 288 | 4,136 |
 | State Assembly Election | Mizoram | 2023 | 40 | 174 |
-| State Assembly Election | NCT of Delhi | 2025 | 70 | 699 |
 | State Assembly Election | Odisha | 2024 | 147 | 1,285 |
 | State Assembly Election | Puducherry | 2026 | 30 | 294 |
 | State Assembly Election | Rajasthan | 2023 | 199 | 1,863 |
@@ -105,18 +105,25 @@ and ECI's report leaves it out. By-elections are in a file of their own (below).
 
 ## By-elections, 2022 to 2026
 
-[`data/release/byelections_2022_2026.csv`](data/release/byelections_2022_2026.csv)
-has every assembly and Lok Sabha by-election ECI lists from March 2022 to
-October 2026: 170 contests (161 assembly, 9 Lok Sabha), 2,016 rows, one per
-candidate with NOTA as a row of its own. TCPD's files end with the assembly
-by-elections of June 2022 and the Lok Sabha by-elections of 2021; `In_TCPD`
-marks the four contests TCPD already has (Tripura, June 2022).
-[`byelection_cards.csv`](data/release/byelection_cards.csv) has one row per
-contest with the card's own totals, electors, poll date and the reason for the
-by-election (resignation, death, disqualification).
+Every assembly and Lok Sabha by-election ECI lists from March 2022 to October
+2026 that TCPD does not have, in TCPD's column layout, ready to append to
+TCPD's files:
 
-The source is ECI's "index card" for each seat (`make byelections`,
-[`byelections.py`](src/eci_results/byelections.py)). Each card is checked
+- [`AE_byelections_2022_2026.csv.gz`](data/release/AE_byelections_2022_2026.csv.gz):
+  157 assembly by-elections in 29 states, 1,863 rows.
+- [`GE_byelections_2022_2026.csv.gz`](data/release/GE_byelections_2022_2026.csv.gz):
+  9 Lok Sabha by-elections, 127 rows.
+
+TCPD's files end with the assembly by-elections of June 2022 and the Lok Sabha
+by-elections of 2021. The four contests TCPD already has (Tripura, June 2022)
+are left out, and serve as a check (below).
+[`byelection_cards.csv`](data/release/byelection_cards.csv) has one row for
+each of the 170 contests ECI lists, those four included, with the card's own
+totals, poll date and the reason for the by-election (resignation, death,
+disqualification).
+
+The source is ECI's "index card" for each seat
+([`byelections.py`](src/eci_results/byelections.py)). Each card is checked
 against itself: candidates' votes must equal the card's Total row, NOTA and
 electors must be present, and the number of rows must equal the card's count of
 contesting candidates. All 170 pass. Four carry a note:
@@ -127,14 +134,32 @@ contesting candidates. All 170 pass. Four carry a note:
   rejected and NOTA postal ballots, so their votes sum to 114,968 while the
   card's total valid votes are 114,941. The rows keep the card's figures.
 
-These rows are not yet in TCPD's layout, so they are not appended to
-`AE_2023_2026` or `GE_2024`. `Poll_No` (the by-election's number within the
-house's term) and `Assembly_No` are not set, and parties carry ECI's full names
-(`Party_Source`) rather than TCPD's labels. Position, Valid_Votes, N_Cand,
-Vote_Share_Percentage, Margin, Margin_Percentage, Deposit_Lost and
-Turnout_Percentage follow TCPD's rules. Two 2022 cards record some candidates
-as OBC; OBC is not a category for contesting, so `Candidate_Type` is GEN for
-them and `Category_Source` keeps the card's word.
+TCPD's by-election rows follow three rules, recovered from those rows:
+
+- `Assembly_No` is the term of the state's latest general election before
+  the by-election (for the Lok Sabha, the 17th or 18th), and `DelimID`,
+  `Constituency_Type`, `Sub_Region` and `District_Name` are that general
+  election's for the seat.
+- `Poll_No` numbers a seat's by-elections within one term: 1, then 2. The two
+  Erode (East) by-elections of 2023 and 2025 are 1 and 2.
+- `Constituency_Name` is the term's general-election name. The build stops if
+  a card's seat name does not match the name TCPD has for that seat number, or
+  if the reservation differs.
+
+`month` is filled from the poll date; TCPD leaves it empty for by-elections.
+Parties are matched to TCPD-PPI as for general elections; 84% of party
+candidates and 97% of party votes match. Most unmatched votes go to parties
+formed after TCPD-PPI ends in 2021 (Bharat Adivasi Party, Tamilaga Vettri
+Kazhagam, Jan Suraaj, Shiv Sena (UBT), NCP (Sharadchandra Pawar)); all are
+listed in `parties_not_in_ppi.csv`. Five checked matches were added to
+`data/party_aliases.csv`. Two 2022 cards record some
+candidates as OBC; OBC is not a category for contesting, so `Candidate_Type` is
+GEN for them.
+
+**Check.** Rebuilt from ECI's cards as if TCPD lacked them, the four Tripura
+by-elections TCPD has match TCPD's rows in every seat fact, every candidate's
+votes, position, party and deposit, and NOTA's votes
+([`byelection_check.csv`](data/release/byelection_check.csv), `make validate`).
 
 ## What each column holds
 
@@ -230,9 +255,6 @@ basis for recovering TCPD's rules.
 
 Contributions are welcome on any of these.
 
-- By-elections in TCPD's layout: `Poll_No`, `Assembly_No` and TCPD's party
-  labels for the rows in `byelections_2022_2026.csv`, so they can be appended
-  to TCPD's files.
 - `Party_Type_TCPD`, from ECI's notifications of recognized parties for each
   election.
 - How TCPD computes `ENOP`.
@@ -248,8 +270,8 @@ analysis past 2023.
 
 ```
 make fetch      # download TCPD's reference files; check every input's SHA-256
-make build      # parse archived pages; write data/release and MANIFEST.json
-make byelections  # parse the by-election index cards; write data/release/byelection*.csv
+make build      # parse archived pages and by-election cards; write data/release and MANIFEST.json
+make byelections  # check the by-election index cards; write byelection_cards.csv
 make validate   # recompute TCPD's rules on TCPD's rows; compare scrape and report
 make test
 ```

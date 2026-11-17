@@ -1,0 +1,5 @@
+State_Name,Assembly_No,Constituency_No,Poll_No,facts_identical,candidates_identical,nota_votes_identical
+Tripura,11,6,1,True,True,True
+Tripura,11,8,1,True,True,True
+Tripura,11,46,1,True,True,True
+Tripura,11,57,1,True,True,True

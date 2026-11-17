@@ -14,10 +14,12 @@ import json
 import numpy as np
 import pandas as pd
 
+from eci_results import byelections
 from eci_results.build import (
     ELECTION_TYPE,
     RELEASE,
     TCPD_FILE,
+    byelection_tables,
     map_parties,
     party_lookup,
     read_tcpd,
@@ -104,6 +106,61 @@ def scrape_check(source, parties):
     print(table.to_string(index=False))
 
 
+def same(a, b):
+    """Equal as numbers when both are numbers, else as text; both empty agree."""
+    if pd.isna(a) and pd.isna(b):
+        return True
+    try:
+        return float(a) == float(b)
+    except (TypeError, ValueError):
+        return str(a) == str(b)
+
+
+def byelection_check(source, tcpd, parties):
+    """Rebuild the by-elections TCPD already has (Tripura, June 2022) from
+    ECI's index cards, as if TCPD lacked them, and compare with TCPD's rows.
+    Writes data/release/byelection_check.csv, one row per contest; the NOTA
+    row is compared on votes only (TCPD writes it as candidate "NOTA" with no
+    party; this repository writes "None of the Above", party NOTA)."""
+    _, rows = byelections.read_cards(source)
+    ours = rows[rows["In_TCPD"].astype(bool)].assign(In_TCPD=False)
+    theirs = byelections.tcpd_byelections(source)
+    seats = set(zip(ours["State_Name"], ours["Constituency_No"], ours["Year"]))
+    keep = [
+        (s, c, y) not in seats
+        for s, c, y in zip(
+            theirs["State_Name"], theirs["Constituency_No"], theirs["Year"]
+        )
+    ]
+    built = byelection_tables(ours, tcpd, theirs[keep], parties)["assembly"]
+    full = pd.read_csv(check(source["reference"]["tcpd_AE"]), low_memory=False)
+    full = full[full["Poll_No"] > 0]
+    contest = ["State_Name", "Assembly_No", "Constituency_No", "Poll_No"]
+    facts = ["Constituency_Name", "Constituency_Type", "DelimID", "Electors"]
+    facts += ["Valid_Votes", "N_Cand"]
+    out = []
+    for key, mine in built.groupby(contest):
+        tcpd_rows = full.set_index(contest).loc[[key]].reset_index()
+        people = ["Votes", "Position", "Party", "Deposit_Lost", "Vote_Share_Percentage"]
+        a = mine[mine["Party"].ne("NOTA")].sort_values("Position")[people]
+        b = tcpd_rows[tcpd_rows["Party"].notna()].sort_values("Position")[people]
+        out.append(
+            {
+                **dict(zip(contest, key)),
+                "facts_identical": all(
+                    same(mine[f].iloc[0], tcpd_rows[f].iloc[0]) for f in facts
+                ),
+                "candidates_identical": len(a) == len(b)
+                and all(same(x, y) for x, y in zip(a.values.ravel(), b.values.ravel())),
+                "nota_votes_identical": sorted(mine["Votes"])
+                == sorted(tcpd_rows["Votes"]),
+            }
+        )
+    table = pd.DataFrame(out)
+    table.to_csv(RELEASE / "byelection_check.csv", index=False)
+    print(table.to_string(index=False))
+
+
 def main():
     source = json.loads(SOURCE.read_text())
     ref = source["reference"]
@@ -129,7 +186,9 @@ def main():
     table.to_csv(RELEASE / "rule_check.csv", index=False)
     print(table.to_string(index=False))
     tcpd = {e: read_tcpd(ref[f]) for e, f in TCPD_FILE.items()}
-    scrape_check(source, party_lookup(pd.read_csv(check(ref["ppi"])), tcpd))
+    parties = party_lookup(pd.read_csv(check(ref["ppi"])), tcpd)
+    scrape_check(source, parties)
+    byelection_check(source, tcpd, parties)
 
 
 if __name__ == "__main__":

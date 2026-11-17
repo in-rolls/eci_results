@@ -1,4 +1,4 @@
-"""By-elections from 2022 on, from ECI's index cards, one row per candidate.
+"""Read and check ECI's by-election index cards, from 2022 on.
 
 ECI publishes each by-election as an "index card": an xlsx (and pdf) with the
 seat in its heading, numbered sections for electors, voters, EVM and postal
@@ -9,19 +9,16 @@ in MANIFEST.csv with their source page, SHA-256 and retrieval time; each file's
 hash is checked against the manifest before it is read.
 
 Each card is checked against itself before its rows are kept: the candidates'
-votes sum to the card's total valid votes (VI 3) and to its Total row, NOTA
-(VI 4) and electors (II 4) are present, and serial numbers run 1..n. The build
-stops if any card fails.
+votes equal the card's Total row, NOTA and electors are present, serial numbers
+run 1..n, and the rows equal the card's count of contesting candidates. The
+build stops if any card fails. A card whose candidates do not add up to its
+"total valid votes" line passes with a note (see card_notes).
 
-TCPD's files end with the assembly by-elections of mid-2022 and the Lok Sabha
-by-elections of 2021. `In_TCPD` marks the contests TCPD already has (same
-state, seat and year among TCPD's rows with Poll_No above 0).
+TCPD's files end with the assembly by-elections of June 2022 and the Lok Sabha
+by-elections of 2021. `In_TCPD` marks the contests TCPD already has.
 
-The rows are not yet in TCPD's layout: Poll_No (the by-election's number within
-the house's term) and Assembly_No are not set, so they are written to their own
-file rather than appended to AE_2023_2026 and GE_2024. Position, Valid_Votes,
-N_Cand, Vote_Share_Percentage, Margin, Margin_Percentage, Deposit_Lost and
-Turnout_Percentage follow TCPD's rules (rules.py).
+This module writes data/release/byelection_cards.csv, one row per contest.
+build.py puts the candidates in TCPD's layout (byelection_tables).
 
     python -m eci_results.byelections
 """
@@ -33,12 +30,10 @@ from pathlib import Path
 import pandas as pd
 
 from eci_results.fetch import SOURCE, check, sha256
-from eci_results.rules import derive
 from eci_results.sources import NOTA_NAMES, tcpd_state
 
 RAW = Path("data/raw/eci_reports/byelections")
 RELEASE = Path("data/release")
-ROWS_OUT = RELEASE / "byelections_2022_2026.csv"
 CARDS_OUT = RELEASE / "byelection_cards.csv"
 SEX = {"MALE": "M", "FEMALE": "F", "THIRD GENDER": "O", "THIRD": "O", "TG": "O"}
 # Some 2022 cards record OBC candidates. OBC is not a category for contesting
@@ -56,7 +51,6 @@ ELECTION_TYPE = {
     "lok_sabha": "Lok Sabha Election (GE)",
     "assembly": "State Assembly Election (AE)",
 }
-CONTEST = ["Election_Type", "State_Name", "Constituency_No", "Poll_Date"]
 HEADERS = {
     "name": r"Name of (the )?Contesting",
     "sex": r"^Sex",
@@ -208,25 +202,25 @@ def card_notes(card, candidates):
 
 
 def tcpd_byelections(source):
-    """(election, state, seat, year) of every by-election TCPD has."""
-    keys = set()
+    """TCPD's own by-elections: one row per contest, with its term and number."""
+    frames = []
     for election, name in {"lok_sabha": "tcpd_GE", "assembly": "tcpd_AE"}.items():
         tcpd = pd.read_csv(check(source["reference"][name]), low_memory=False)
         tcpd = tcpd[tcpd["Poll_No"] > 0]
-        for row in (
-            tcpd[["State_Name", "Constituency_No", "Year"]]
-            .drop_duplicates()
-            .itertuples()
-        ):
-            keys.add(
-                (election, row.State_Name, int(row.Constituency_No), int(row.Year))
-            )
-    return keys
+        cols = ["State_Name", "Assembly_No", "Constituency_No", "Year", "Poll_No"]
+        frames.append(tcpd[cols].drop_duplicates().assign(election=election))
+    return pd.concat(frames, ignore_index=True)
 
 
-def main():
-    source = json.loads(SOURCE.read_text())
-    in_tcpd = tcpd_byelections(source)
+def read_cards(source):
+    """Every card checked and read: (one row per card, one row per candidate
+    with NOTA kept). Stops if a file's hash differs from the manifest or a card
+    fails its own totals."""
+    theirs = tcpd_byelections(source)
+    in_tcpd = set(
+        zip(theirs["election"], theirs["State_Name"], theirs["Constituency_No"],
+            theirs["Year"])
+    )  # fmt: skip
     frame = pd.read_csv(RAW / "MANIFEST.csv")
     cards, rows, bad = [], [], []
     for item in frame[frame["format"] == "xlsx"].itertuples():
@@ -236,16 +230,11 @@ def main():
         card, candidates = read_eci_index_card(path)
         failures = card_failures(card, candidates)
         date = pd.to_datetime(card["Poll_Date"], dayfirst=True, errors="coerce")
+        seat = (card["election"], card["State_Name"], card["Constituency_No"])
         card.update(
             Year=date.year,
             month=date.month,
-            In_TCPD=(
-                card["election"],
-                card["State_Name"],
-                card["Constituency_No"],
-                date.year,
-            )
-            in in_tcpd,
+            In_TCPD=(*seat, date.year) in in_tcpd,
             Batch=item.batch,
             Source_File=str(path),
             Source_SHA256=item.sha256,
@@ -276,20 +265,20 @@ def main():
     if bad:
         raise SystemExit("index cards failing their own totals:\n" + "\n".join(bad))
     table = pd.DataFrame(rows)
-    table["Election_Type"] = table["election"].map(ELECTION_TYPE)
-    table["Party"] = table["Party_Source"]
-    table.loc[
-        table["Candidate"].str.upper().isin(NOTA_NAMES | {"NONE OF THE ABOVE"}), "Party"
-    ] = "NOTA"
-    table = derive(table, CONTEST).drop(columns=["Party"])
+    nota = table["Candidate"].str.upper().isin(NOTA_NAMES | {"NONE OF THE ABOVE"})
+    table.loc[nota, "Party_Source"] = "NOTA"
+    return pd.DataFrame(cards), table
+
+
+def main():
+    """Check every card and write byelection_cards.csv. `make build` also puts
+    the candidates in TCPD's layout (build.py)."""
+    cards, rows = read_cards(json.loads(SOURCE.read_text()))
     RELEASE.mkdir(parents=True, exist_ok=True)
-    table.to_csv(ROWS_OUT, index=False)
-    pd.DataFrame(cards).to_csv(CARDS_OUT, index=False)
-    contests = table.groupby(CONTEST).ngroups
+    cards.to_csv(CARDS_OUT, index=False)
     print(
-        f"{ROWS_OUT}: {len(table)} rows, {contests} contests, sha256 {sha256(ROWS_OUT)}"
+        f"{CARDS_OUT}: {len(cards)} cards, {len(rows)} rows, sha256 {sha256(CARDS_OUT)}"
     )
-    print(f"{CARDS_OUT}: {len(cards)} cards, sha256 {sha256(CARDS_OUT)}")
 
 
 if __name__ == "__main__":
