@@ -21,12 +21,14 @@ and profession. Writes data/release/ and MANIFEST.json.
     python -m eci_results.build
 """
 
+import difflib
 import json
 import re
 from pathlib import Path
 
 import pandas as pd
 
+from eci_results import byelections
 from eci_results.fetch import SOURCE, check, sha256
 from eci_results.rules import CONTEST, derive
 from eci_results.sources import READERS, tcpd_state
@@ -42,6 +44,13 @@ ELECTION_TYPE = {
 }
 TCPD_FILE = {"lok_sabha": "tcpd_GE", "assembly": "tcpd_AE"}
 OUTPUT = {"lok_sabha": "GE_2024.csv.gz", "assembly": "AE_2023_2026.csv.gz"}
+BY_OUTPUT = {
+    "lok_sabha": "GE_byelections_2022_2026.csv.gz",
+    "assembly": "AE_byelections_2022_2026.csv.gz",
+}
+# A by-election's seat name must be this close to its term's general election
+# (difflib ratio of the name keys), or the seat number is suspect.
+SEAT_NAME_MATCH = 0.7
 # TCPD-PPI's IDs for independents and NOTA.
 IND_ID, NOTA_ID = 10809, 5897
 # Seats redrawn since TCPD's last election there: J&K and Ladakh in 2022,
@@ -301,6 +310,111 @@ def build_election(item, tcpd, parties, numbers):
     return derive(frame, CONTEST)
 
 
+def general_seats(generals):
+    """Every seat of every general election, with its date, term and facts."""
+    cols = ["State_Name", "Year", "month", "Assembly_No", "Constituency_No"]
+    cols += ["Constituency_Name"] + SEAT_FACTS
+    seats = generals.reindex(columns=cols).dropna(subset=["Constituency_No"])
+    seats = seats.drop_duplicates(["State_Name", "Year", "month", "Constituency_No"])
+    return seats.assign(start=seats["Year"] * 100 + seats["month"])
+
+
+def byelection_tables(rows, generals, theirs, parties):
+    """By-election candidates (byelections.read_cards) in TCPD's layout.
+
+    Each by-election belongs to the term of the state's latest general election
+    on or before its poll date, and takes that election's Assembly_No and seat
+    facts, as TCPD's own by-election rows do. Poll_No numbers a seat's
+    by-elections within the term, 1, 2, ..., after any TCPD already has (TCPD's
+    rule, checked on its rows). Contests TCPD already has are left out.
+    """
+    out = {}
+    for election, frame in rows.groupby("election"):
+        seats = general_seats(generals[election])
+        frame = frame[~frame["In_TCPD"].astype(bool)].copy()
+        frame["when"] = frame["Year"] * 100 + frame["month"]
+        contest = ["State_Name", "Constituency_No", "Poll_Date"]
+        facts, problems = [], []
+        for c in frame.drop_duplicates(contest).itertuples():
+            here = seats[
+                seats["State_Name"].eq(c.State_Name)
+                & seats["Constituency_No"].eq(c.Constituency_No)
+            ]
+            if here[here["Year"].eq(c.Year)]["start"].isna().any():
+                problems.append(f"{c.State_Name} {c.Constituency_No}: general's month")
+                continue
+            before = here[here["start"] <= c.when].sort_values("start")
+            if before.empty:
+                problems.append(f"{c.State_Name} {c.Constituency_No}: no general")
+                continue
+            term = before.iloc[-1]
+            theirs_name, ours = key(term["Constituency_Name"]), key(c.Constituency_Name)
+            ratio = difflib.SequenceMatcher(None, theirs_name, ours).ratio()
+            # SUAR is TCPD's SUAR TANDA: a name inside the other also matches.
+            inside = ours in theirs_name or theirs_name in ours
+            if ratio < SEAT_NAME_MATCH and not inside:
+                problems.append(
+                    f"{c.State_Name} {c.Constituency_No}: card says "
+                    f"{c.Constituency_Name}, TCPD {term['Constituency_Name']}"
+                )
+            if c.Constituency_Type != term["Constituency_Type"] and pd.notna(
+                term["Constituency_Type"]
+            ):
+                problems.append(
+                    f"{c.State_Name} {c.Constituency_No}: type {c.Constituency_Type}, "
+                    f"TCPD {term['Constituency_Type']}"
+                )
+            facts.append(
+                {
+                    **{col: getattr(c, col) for col in contest},
+                    "Assembly_No": term["Assembly_No"],
+                    **{
+                        col: term[col]
+                        for col in SEAT_FACTS + ["Constituency_Name"]
+                        if col != "Constituency_Type"
+                    },
+                    "Constituency_Type": (
+                        term["Constituency_Type"]
+                        if pd.notna(term["Constituency_Type"])
+                        else c.Constituency_Type
+                    ),
+                }
+            )
+        if problems:
+            raise SystemExit(f"{election} by-elections:\n" + "\n".join(problems))
+        facts = pd.DataFrame(facts)
+        frame = frame.drop(columns=["Constituency_Name", "Constituency_Type"]).merge(
+            facts, on=contest, how="left", validate="many_to_one"
+        )
+        # Poll_No: TCPD's by-elections in the same term come first.
+        term_keys = ["State_Name", "Assembly_No", "Constituency_No"]
+        prior = (
+            theirs[theirs["election"].eq(election)]
+            .groupby(term_keys, dropna=False)
+            .size()
+            .rename("prior")
+        )
+        order = frame.drop_duplicates(contest)[term_keys + ["Poll_Date", "when"]]
+        order = order.sort_values("when")
+        order["rank"] = order.groupby(term_keys, dropna=False).cumcount() + 1
+        order = order.join(prior, on=term_keys)
+        order["Poll_No"] = order["prior"].fillna(0).astype(int) + order["rank"]
+        frame = frame.merge(
+            order[["State_Name", "Constituency_No", "Poll_Date", "Poll_No"]],
+            on=contest,
+            how="left",
+            validate="many_to_one",
+        )
+        frame["Election_Type"] = ELECTION_TYPE[election]
+        frame = map_parties(frame, parties)
+        for col in ["Electors", "Age", "Assembly_No", "Votes"]:
+            frame[col] = pd.to_numeric(frame[col], errors="coerce")
+        out[election] = derive(frame, CONTEST)
+        if out[election].duplicated(CONTEST + ["Position"]).any():
+            raise SystemExit(f"{election} by-elections: duplicate positions")
+    return out
+
+
 def gate(frame, item, tcpd):
     """Stop the build if a seat is missing or the totals disagree."""
     label = f"{item['election']} {item['year']} {item['state']}"
@@ -384,8 +498,13 @@ def main():
     manifest = {"files": {}}
     unmatched = []
     tables = {e: pd.concat(frames[e], ignore_index=True) for e in OUTPUT}
-    for election, name in OUTPUT.items():
-        table = tables[election]
+    cards, by_rows = byelections.read_cards(source)
+    generals = {e: pd.concat([tcpd[e], tables[e]], ignore_index=True) for e in OUTPUT}
+    theirs = byelections.tcpd_byelections(source)
+    by_tables = byelection_tables(by_rows, generals, theirs, parties)
+    outputs = [(e, OUTPUT[e], tables[e]) for e in OUTPUT]
+    outputs += [(e, BY_OUTPUT[e], by_tables[e]) for e in BY_OUTPUT]
+    for election, name, table in outputs:
         named = table["Party"].ne("IND") & table["Party"].ne("NOTA")
         unmatched.append(
             table[named & table["Party_ID"].isna()]
@@ -404,8 +523,13 @@ def main():
             "sha256": sha256(path),
             "filled_share": table.notna().mean().round(4).to_dict(),
         }
+    cards.to_csv(byelections.CARDS_OUT, index=False)
+    manifest["files"][str(byelections.CARDS_OUT)] = {
+        "rows": len(cards),
+        "sha256": sha256(byelections.CARDS_OUT),
+    }
     audit = (
-        pd.concat(tables.values())
+        pd.concat([*tables.values(), *by_tables.values()])
         .query("Party_Match not in ['independent', 'nota']")
         .groupby(
             [

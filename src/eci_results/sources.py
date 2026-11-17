@@ -23,7 +23,7 @@ CATEGORY = {"GENERAL": "GEN", "SC": "SC", "ST": "ST", "BL": "BL"}
 
 
 # ECI names TCPD writes differently.
-STATE_NAMES = {"NCT_OF_Delhi": "Delhi"}
+STATE_NAMES = {"NCT_OF_Delhi": "Delhi", "NCT_of_Delhi": "Delhi"}
 
 
 def tcpd_state(name):
