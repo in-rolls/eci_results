@@ -1,4 +1,4 @@
-.PHONY: fetch wayback parse build validate test lint
+.PHONY: fetch wayback parse build byelections validate test lint
 
 # Download every input in data/source.json and check its SHA-256.
 fetch:
@@ -13,6 +13,10 @@ parse:
 
 build: parse
 	uv run python -m eci_results.build
+
+# By-elections from ECI's index cards (data/raw/eci_reports/byelections/).
+byelections:
+	uv run python -m eci_results.byelections
 
 validate:
 	uv run python -m eci_results.validate
