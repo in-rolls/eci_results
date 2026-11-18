@@ -266,9 +266,22 @@ If TCPD resumes publishing, these files are meant to fold into theirs.
 a study of namesake candidates in Indian elections, uses them to extend its
 analysis past 2023.
 [in-rolls/eci_candidate_photos](https://github.com/in-rolls/eci_candidate_photos)
-has every 2024 Lok Sabha candidate's photograph from ECI's results website,
-keyed to these files by `State_Name`, `Year`, `month`, `Poll_No`,
-`Constituency_No` and `Position`.
+has every 2024 Lok Sabha candidate's photograph from ECI's results website.
+Six columns identify a candidate here, and its join file carries all six, so
+one merge attaches the photos. Names will not do, because 16 pairs of
+candidates share a name and a seat.
+
+```python
+photos = pd.read_csv(
+    "https://raw.githubusercontent.com/in-rolls/eci_candidate_photos/main/"
+    "data/eci_results_join.csv"
+)
+key = ["State_Name", "Year", "month", "Poll_No", "Constituency_No", "Position"]
+ls = pd.read_csv(url + "GE_2024.csv.gz").merge(
+    photos[key + ["photo_path"]], on=key, how="left"
+)
+# every candidate but NOTA gets a photo_path, relative to that repository
+```
 
 ## Rebuild
 
