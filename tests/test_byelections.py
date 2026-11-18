@@ -67,6 +67,7 @@ def test_byelections_take_their_term_and_count_on_from_tcpd():
         Age=40,
         Sex="M",
         Candidate_Type="GEN",
+        Contested=2,
     )
     lookup = {
         "alias": {},
@@ -80,3 +81,22 @@ def test_byelections_take_their_term_and_count_on_from_tcpd():
     assert numbers["Assembly_No"].to_dict() == {2022: 2, 2024: 2}
     assert numbers["Poll_No"].to_dict() == {2022: 2, 2024: 3}
     assert out["Valid_Votes"].eq(105).all() and out["N_Cand"].eq(2).all()
+    # The card's candidate count is not TCPD's Contested (a candidate's contests).
+    assert out.get("Contested", pd.Series(dtype=float)).isna().all()
+
+
+def test_redrawn_assembly_counts_on_and_takes_the_new_delimitation():
+    import pandas as pd
+
+    from eci_results.build import carry_assembly
+
+    tcpd = pd.DataFrame(
+        {"State_Name": "Jammu_&_Kashmir", "Year": [2008, 2014],
+         "Assembly_No": [9, 10], "DelimID": 4, "Constituency_No": 1,
+         "Constituency_Name": "A", "Constituency_Type": "GEN",
+         "Sub_Region": "R", "District_Name": "D"}
+    )  # fmt: skip
+    frame = pd.DataFrame({"Constituency_No": [1, 90], "Constituency_Name": "B"})
+    out = carry_assembly(frame, tcpd, "Jammu_&_Kashmir")
+    assert out["Assembly_No"].eq(11).all() and out["DelimID"].eq(5).all()
+    assert "Sub_Region" not in out

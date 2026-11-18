@@ -9,8 +9,9 @@ filled one of four ways, and only where the result is TCPD's quantity:
   Vote_Share_Percentage, Margin, Margin_Percentage, Deposit_Lost,
   Turnout_Percentage;
 - from the seat's previous TCPD general election: Constituency_Type,
-  Sub_Region, District_Name, DelimID, and Assembly_No plus one (not for
-  Jammu and Kashmir, redrawn in 2022);
+  Sub_Region, District_Name, DelimID, and Assembly_No plus one; seats
+  redrawn since (Assam, Jammu and Kashmir) take DelimID 5 and no other
+  seat facts;
 - from TCPD's party list (TCPD-PPI): Party (TCPD's abbreviation) and
   Party_ID, where the party existed by 2021.
 
@@ -56,6 +57,11 @@ IND_ID, NOTA_ID = 10809, 5897
 # Seats redrawn since TCPD's last election there: J&K and Ladakh in 2022,
 # Assam in 2023. Seat-level facts cannot be carried across a redrawing.
 REDRAWN = {"Jammu_&_Kashmir", "Ladakh", "Assam"}
+# TCPD's DelimID runs 1 to 4, one per national delimitation; 4 covers 2008 on.
+# The two redrawings since are new boundary sets, so they take the next code.
+# Ladakh is one seat whose boundary is its territory, and stays empty: TCPD
+# files it under Jammu and Kashmir.
+NEW_DELIM = {"Jammu_&_Kashmir": 5, "Assam": 5}
 EXPECTED_SEATS = {"Assam": 126, "Jammu_&_Kashmir": 90}
 # The two seats of Dadra & Nagar Haveli and Daman & Diu, merged in 2020,
 # and their TCPD (state, seat number) before the merger.
@@ -105,9 +111,11 @@ def last_election(tcpd, state):
 
 def carry_assembly(frame, tcpd, state):
     seats = last_election(tcpd, state)
-    frame["Assembly_No"] = (
-        seats["Assembly_No"].max() + 1 if state != "Jammu_&_Kashmir" else pd.NA
-    )
+    # J&K's 2024 assembly is the Union Territory's first, but TCPD keeps one
+    # State_Name, whose 1962 assembly is already number 1; it continues at 11.
+    frame["Assembly_No"] = seats["Assembly_No"].max() + 1
+    if state in NEW_DELIM:
+        frame["DelimID"] = NEW_DELIM[state]
     if state not in REDRAWN:
         for col in seats.columns.drop(["Assembly_No", "Constituency_Name"]):
             carried = frame["Constituency_No"].map(seats[col])
@@ -188,6 +196,7 @@ def carry_lok_sabha(frame, tcpd):
     for col in [c for c in SEAT_FACTS if c in seats]:
         frame[col] = seats[col].reindex(index).to_numpy()
     frame.loc[frame["State_Name"].isin(REDRAWN), SEAT_FACTS[:3]] = pd.NA
+    frame["DelimID"] = frame["State_Name"].map(NEW_DELIM).fillna(frame["DelimID"])
     return frame
 
 
@@ -331,7 +340,13 @@ def byelection_tables(rows, generals, theirs, parties):
     out = {}
     for election, frame in rows.groupby("election"):
         seats = general_seats(generals[election])
-        frame = frame[~frame["In_TCPD"].astype(bool)].copy()
+        # The card's count of contesting candidates is in byelection_cards.csv;
+        # TCPD's Contested counts a candidate's own contests, which cards lack.
+        frame = (
+            frame[~frame["In_TCPD"].astype(bool)]
+            .drop(columns="Contested", errors="ignore")
+            .copy()
+        )
         frame["when"] = frame["Year"] * 100 + frame["month"]
         contest = ["State_Name", "Constituency_No", "Poll_Date"]
         facts, problems = [], []
