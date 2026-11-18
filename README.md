@@ -265,6 +265,10 @@ If TCPD resumes publishing, these files are meant to fold into theirs.
 [in-rolls/candidate_namesakes](https://github.com/in-rolls/candidate_namesakes),
 a study of namesake candidates in Indian elections, uses them to extend its
 analysis past 2023.
+[in-rolls/eci_candidate_photos](https://github.com/in-rolls/eci_candidate_photos)
+has every 2024 Lok Sabha candidate's photograph from ECI's results website,
+keyed to these files by `State_Name`, `Year`, `month`, `Poll_No`,
+`Constituency_No` and `Position`.
 
 ## Rebuild
 
