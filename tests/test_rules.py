@@ -68,6 +68,7 @@ def test_parties_match_exact_labels_before_looser_ones():
         },
         "states": {14635: {"X"}, 2560: {"Y"}},
         "size": {14635: 900, 2560: 10},
+        "eci_name": {},
     }
     labels = ["Bharatiya Janata Party", "Independent", "NOTA", "JnP", "CPI(M)", "New"]
     frame = pd.DataFrame({"State_Name": "X", "Party_Source": labels})
@@ -75,6 +76,31 @@ def test_parties_match_exact_labels_before_looser_ones():
     assert out["Party"].tolist() == ["BJP", "IND", "NOTA", "JnP", "CPM", "New"]
     assert out["Party_ID"].tolist()[:5] == [1605, 10809, 5897, 17069, 14635]
     assert pd.isna(out["Party_ID"].iloc[5])
+
+
+def test_eci_full_name_overrides_a_reused_abbreviation():
+    """A label with ECI's full name matches by that name, not by PPI's
+    abbreviation; KRS is in PPI, but not as the party ECI names."""
+    lookup = {
+        "label": {5671: "NPF", 777: "NPEP", 11393: "KRRS"},
+        "alias": {},
+        "index": {
+            "exact": {"NPEP": [5671], "KRS": [11393]},
+            "compact": {},
+            "any case": {},
+            "name": {key("National People's Party"): [777]},
+        },
+        "states": {},
+        "size": {},
+        "eci_name": {
+            "NPEP": "National People's Party",
+            "KRS": "Karnataka Rashtra Samithi",
+        },
+    }
+    frame = pd.DataFrame({"State_Name": "X", "Party_Source": ["NPEP", "KRS"]})
+    out = map_parties(frame, lookup)
+    assert out["Party_ID"].iloc[0] == 777 and pd.isna(out["Party_ID"].iloc[1])
+    assert out["Party_Match"].tolist() == ["ECI name", "unmatched"]
 
 
 @pytest.mark.parametrize("layout", ["2023", "2024"])

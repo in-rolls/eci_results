@@ -20,8 +20,8 @@ from eci_results.build import (
     RELEASE,
     TCPD_FILE,
     byelection_tables,
+    load_parties,
     map_parties,
-    party_lookup,
     read_tcpd,
 )
 from eci_results.fetch import SOURCE, check
@@ -186,7 +186,7 @@ def main():
     table.to_csv(RELEASE / "rule_check.csv", index=False)
     print(table.to_string(index=False))
     tcpd = {e: read_tcpd(ref[f]) for e, f in TCPD_FILE.items()}
-    parties = party_lookup(pd.read_csv(check(ref["ppi"])), tcpd)
+    parties = load_parties(source, tcpd)
     scrape_check(source, parties)
     byelection_check(source, tcpd, parties)
 

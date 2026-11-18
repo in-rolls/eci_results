@@ -3,7 +3,7 @@
     "data/release/GE_2024.csv.gz": {
       "rows": 8901,
       "contests": 542,
-      "sha256": "9eed76218b186fd25026fd0c03c36c525c9ead3d4beb1ab5bca4a579b36a7043",
+      "sha256": "0b3d27bd13e6747f6fc90a2090a70ec8cf6195ef87c90781d927c679bf325c5f",
       "filled_share": {
         "State_Name": 1.0,
         "Assembly_No": 1.0,
@@ -32,7 +32,7 @@
         "ENOP": 0.0,
         "pid": 0.0,
         "Party_Type_TCPD": 0.0,
-        "Party_ID": 0.8934,
+        "Party_ID": 0.8971,
         "last_poll": 0.0,
         "Contested": 0.0,
         "Last_Party": 0.0,
@@ -55,7 +55,7 @@
     "data/release/AE_2023_2026.csv.gz": {
       "rows": 34198,
       "contests": 2779,
-      "sha256": "5c55cd0feeef45b74b197fc91d7a838e2e73ee8274fb952371c326e80ad4377f",
+      "sha256": "b4b263869d25c60a749b82b3bdd24e2e4147e089276228779317b880b47d7d7f",
       "filled_share": {
         "State_Name": 1.0,
         "Assembly_No": 1.0,
@@ -86,7 +86,7 @@
         "ENOP": 0.0,
         "pid": 0.0,
         "Party_Type_TCPD": 0.0,
-        "Party_ID": 0.9003,
+        "Party_ID": 0.9064,
         "last_poll": 0.0,
         "Contested": 0.0,
         "Last_Party": 0.0,
@@ -161,7 +161,7 @@
     "data/release/AE_byelections_2022_2026.csv.gz": {
       "rows": 1863,
       "contests": 157,
-      "sha256": "7bc968b19d78f9f30e24f8bf56d0265fae09bb6c3f7fe8ee86ee45eced392458",
+      "sha256": "c3a1bb3f7726cf06537cf7ab0a7fcb5c03e168d033ce98da21cfa0196e5a67f6",
       "filled_share": {
         "State_Name": 1.0,
         "Assembly_No": 1.0,
@@ -192,7 +192,7 @@
         "ENOP": 0.0,
         "pid": 0.0,
         "Party_Type_TCPD": 0.0,
-        "Party_ID": 0.9275,
+        "Party_ID": 0.9291,
         "last_poll": 0.0,
         "Contested": 0.0,
         "Last_Party": 0.0,
@@ -217,10 +217,10 @@
       "sha256": "65d18c5b5050230f47505ada73729fc4e9ec9e52726ce82107df2d4e01212b2c"
     },
     "data/release/party_matches.csv": {
-      "sha256": "c9243034b5482bc44a926d5e3a98b7e666cc1549fc2950fd2d41292525f7a47a"
+      "sha256": "6f6d0db8133a743a11bfd75b6376477d62abb0907fb16d515271d1a0d90c80a0"
     },
     "data/release/parties_not_in_ppi.csv": {
-      "sha256": "a71df02be237681af5f85623df628890c30f2801ac874a956857a4633680cb9c"
+      "sha256": "6eb866f8576a0ba55034e10b9d3623137be141351812a050d98243c7ad0bc7ea"
     }
   }
 }

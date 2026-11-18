@@ -212,13 +212,44 @@ TIERS = [
 ]
 
 
-def party_lookup(ppi, tcpd):
+def letters(text):
+    return re.sub(r"[^A-Z]", "", str(text).upper())
+
+
+def eci_party_names(report, scrape):
+    """ECI's full name for each party abbreviation in the 2024 Lok Sabha.
+
+    Report 33 prints abbreviations; ECI's results site, as india-votes-data
+    scraped it, prints full names for the same candidates. The two are joined
+    on state and candidate name, and an abbreviation keeps its most common
+    full name when at least 90% of its candidates agree on it.
+    """
+    report = pd.read_csv(report)
+    report.columns = report.columns.str.strip()
+    site = pd.read_csv(scrape, sep=";")
+    person = (
+        report["State Name"].map(letters) + "|" + report["Candidate Name"].map(letters)
+    )
+    site["person"] = site["State"].map(letters) + "|" + site["Candidate"].map(letters)
+    pairs = pd.DataFrame({"abbr": report["Party Name"], "person": person}).merge(
+        site.drop_duplicates("person")[["person", "Party"]], on="person"
+    )
+    share = pairs.groupby("abbr")["Party"].value_counts(normalize=True)
+    top = share.groupby(level=0).head(1).reset_index(name="share")
+    top = top[top["share"].ge(0.9) & ~top["Party"].isin(["Independent", "NOTA"])]
+    return dict(zip(top["abbr"], top["Party"].str.strip()))
+
+
+def party_lookup(ppi, tcpd, eci_names):
     """Everything needed to match a printed party label to a TCPD Party_ID.
 
     Labels are TCPD's own printed label for each Party_ID (CPM, not PPI's
     CPIM). Candidates come from PPI's abbreviations at three strictness
     levels (TIERS) and from PPI's names; data/party_aliases.csv holds checked
-    matches that override them.
+    matches that override them. A label with a full name from ECI
+    (eci_party_names) is matched by that name only, because PPI's
+    abbreviations are reused across parties: to ECI, KRS is the Karnataka
+    Rashtra Samithi; in PPI, the Karnataka Rajya Ryota Sangha.
     """
     ppi = ppi[ppi["Party_ID"].notna()]
     recent = pd.concat(tcpd.values())
@@ -244,17 +275,33 @@ def party_lookup(ppi, tcpd):
         "index": index,
         "states": ppi.groupby("Party_ID")["State_Name"].agg(set).to_dict(),
         "size": recent["Party_ID"].value_counts().to_dict(),
+        "eci_name": eci_names,
     }
+
+
+def load_parties(source, tcpd):
+    """party_lookup from the pinned PPI, report 33 and results-site files."""
+    ref = source["reference"]
+    report = next(i for i in source["results"] if i["format"] == "eci_report")
+    names = eci_party_names(check(report), check(ref["ls_2024_numbers"]))
+    return party_lookup(pd.read_csv(check(ref["ppi"])), tcpd, names)
 
 
 def match_party(text, state, lookup):
     """(Party_ID, tier, number of candidate parties) for one printed label."""
-    alias = lookup["alias"].get(key(text))
-    if alias is not None:
-        return alias, "alias", 1
-    tiers = [(t, norm(text)) for t, norm in TIERS] + [("name", key(text))]
-    for tier, k in tiers:
-        found = lookup["index"][tier].get(k)
+    full = lookup["eci_name"].get(text)
+    for name in [text] + ([full] if full else []):
+        alias = lookup["alias"].get(key(name))
+        if alias is not None:
+            return alias, "alias", 1
+    if full:
+        tiers = [("ECI name", "name", key(full))]
+    else:
+        tiers = [(t, t, norm(text)) for t, norm in TIERS] + [
+            ("name", "name", key(text))
+        ]
+    for tier, table, k in tiers:
+        found = lookup["index"][table].get(k)
         if not found:
             continue
         # Prefer a party PPI records in this state, then the more common one.
@@ -501,7 +548,7 @@ def main():
     source = json.loads(SOURCE.read_text())
     ref = source["reference"]
     tcpd = {e: read_tcpd(ref[f]) for e, f in TCPD_FILE.items()}
-    parties = party_lookup(pd.read_csv(check(ref["ppi"])), tcpd)
+    parties = load_parties(source, tcpd)
     numbers = check(ref["ls_2024_numbers"])
     frames = {e: [] for e in OUTPUT}
     for item in source["results"]:

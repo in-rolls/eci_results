@@ -75,6 +75,7 @@ def test_byelections_take_their_term_and_count_on_from_tcpd():
         "states": {},
         "size": {},
         "label": {},
+        "eci_name": {},
     }
     out = byelection_tables(rows, {"assembly": generals}, theirs, lookup)["assembly"]
     numbers = out.drop_duplicates("Poll_Date").set_index("Year")
