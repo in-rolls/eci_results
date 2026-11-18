@@ -212,12 +212,66 @@
         "Election_Type": 1.0
       }
     },
+    "data/release/AE_adjourned_2019_2023.csv.gz": {
+      "rows": 18,
+      "contests": 2,
+      "sha256": "fba8dc257b77bd818fdab618e7ed3508626b116c2487d7e4d88370ff084a4435",
+      "filled_share": {
+        "State_Name": 1.0,
+        "Assembly_No": 1.0,
+        "Constituency_No": 1.0,
+        "Year": 1.0,
+        "month": 1.0,
+        "DelimID": 1.0,
+        "Poll_No": 1.0,
+        "Position": 1.0,
+        "Candidate": 1.0,
+        "Sex": 0.3333,
+        "Party": 1.0,
+        "Votes": 1.0,
+        "Age": 0.3333,
+        "Candidate_Type": 0.3333,
+        "Valid_Votes": 1.0,
+        "Electors": 1.0,
+        "Constituency_Name": 1.0,
+        "Constituency_Type": 1.0,
+        "District_Name": 1.0,
+        "Sub_Region": 1.0,
+        "N_Cand": 1.0,
+        "Turnout_Percentage": 1.0,
+        "Vote_Share_Percentage": 1.0,
+        "Deposit_Lost": 0.8889,
+        "Margin": 1.0,
+        "Margin_Percentage": 1.0,
+        "ENOP": 0.0,
+        "pid": 0.0,
+        "Party_Type_TCPD": 0.0,
+        "Party_ID": 1.0,
+        "last_poll": 0.0,
+        "Contested": 0.0,
+        "Last_Party": 0.0,
+        "Last_Party_ID": 0.0,
+        "Last_Constituency_Name": 0.0,
+        "Same_Constituency": 0.0,
+        "Same_Party": 0.0,
+        "No_Terms": 0.0,
+        "Turncoat": 0.0,
+        "Incumbent": 0.0,
+        "Recontest": 0.0,
+        "MyNeta_education": 0.0,
+        "TCPD_Prof_Main": 0.0,
+        "TCPD_Prof_Main_Desc": 0.0,
+        "TCPD_Prof_Second": 0.0,
+        "TCPD_Prof_Second_Desc": 0.0,
+        "Election_Type": 1.0
+      }
+    },
     "data/release/byelection_cards.csv": {
       "rows": 170,
       "sha256": "65d18c5b5050230f47505ada73729fc4e9ec9e52726ce82107df2d4e01212b2c"
     },
     "data/release/party_matches.csv": {
-      "sha256": "6f6d0db8133a743a11bfd75b6376477d62abb0907fb16d515271d1a0d90c80a0"
+      "sha256": "79b26d088d9f06edfb3235d8165dd3d658f0d01142773c524719f0288d87a883"
     },
     "data/release/parties_not_in_ppi.csv": {
       "sha256": "6eb866f8576a0ba55034e10b9d3623137be141351812a050d98243c7ad0bc7ea"

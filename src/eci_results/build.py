@@ -45,6 +45,7 @@ ELECTION_TYPE = {
 }
 TCPD_FILE = {"lok_sabha": "tcpd_GE", "assembly": "tcpd_AE"}
 OUTPUT = {"lok_sabha": "GE_2024.csv.gz", "assembly": "AE_2023_2026.csv.gz"}
+ADJOURNED_OUTPUT = "AE_adjourned_2019_2023.csv.gz"
 BY_OUTPUT = {
     "lok_sabha": "GE_byelections_2022_2026.csv.gz",
     "assembly": "AE_byelections_2022_2026.csv.gz",
@@ -477,6 +478,96 @@ def byelection_tables(rows, generals, theirs, parties):
     return out
 
 
+def constituency_summary(path, sheet):
+    """Electors, total valid votes and NOTA from one seat's page of ECI's
+    report "8 - Constituency Data Summary"."""
+    raw = pd.read_excel(path, sheet_name=sheet, header=None, dtype=object)
+    values = {}
+    for row in raw.itertuples(index=False):
+        cells = [c for c in row if pd.notna(c)]
+        label = str(cells[0]) if cells else ""
+        numbers = [c for c in cells[1:] if str(c).replace(".", "").isdigit()]
+        for name, pattern in {
+            "electors": r"^4\. Total$",
+            "valid": r"^7\. Total Valid Votes Polled",
+            "nota": r"^9\. VOTES POLLED FOR 'NOTA'",
+        }.items():
+            if (
+                numbers
+                and re.search(pattern, label.strip(), re.I)
+                and name not in values
+            ):
+                values[name] = int(float(numbers[-1]))
+    return values
+
+
+def adjourned_table(source, tcpd, parties):
+    """Seats whose poll was adjourned and held after a general election TCPD
+    has, but which TCPD's rows lack (source.json "adjourned").
+
+    Each is part of that general election, as TCPD codes such polls: Poll_No
+    0, the election's Assembly_No, and the seat's facts from its latest TCPD
+    row on the same boundaries (last_election). Year and month are the
+    adjourned poll's. The build stops if the seat's name or reservation
+    differs from TCPD's, or if a seat summary disagrees with the rows.
+    """
+    frames = []
+    for item in source.get("adjourned", []):
+        state, seat = item["state"], item["seat"]
+        label = f"adjourned poll {state} {seat}"
+        if "candidates" in item:
+            check(item["candidates"])
+        frame = READERS[item["format"]](check(item))
+        frame = frame[frame["Constituency_No"].eq(seat)].copy()
+        frame["State_Name"] = state
+        rows = tcpd[tcpd["State_Name"].eq(state)]
+        if rows["Year"].max() != item["general_year"]:
+            raise SystemExit(
+                f"{label}: TCPD's latest {state} election is not {item['general_year']}"
+            )
+        if (
+            rows[rows["Year"].eq(item["general_year"])]["Constituency_No"]
+            .eq(seat)
+            .any()
+        ):
+            raise SystemExit(f"{label}: TCPD already has this seat")
+        facts = last_election(tcpd, state).loc[seat]
+        name = frame["Constituency_Name"].iloc[0]
+        if key(facts["Constituency_Name"]) != key(name):
+            raise SystemExit(f"{label}: name {name}, TCPD {facts['Constituency_Name']}")
+        if (
+            "Constituency_Type" in frame
+            and frame["Constituency_Type"].ne(facts["Constituency_Type"]).any()
+        ):
+            raise SystemExit(f"{label}: reservation differs from TCPD")
+        for col in SEAT_FACTS + ["Assembly_No", "Constituency_Name"]:
+            frame[col] = facts[col]
+        if "summary" in item:
+            summary = constituency_summary(
+                check(item["summary"]), item["summary"]["sheet"]
+            )
+            nota = frame["Party_Source"].eq("NOTA")
+            found = {
+                "electors": int(frame["Electors"].iloc[0]),
+                "valid": int(frame.loc[~nota, "Votes"].sum()),
+                "nota": int(frame.loc[nota, "Votes"].sum()),
+            }
+            if found != summary:
+                raise SystemExit(
+                    f"{label}: rows give {found}, ECI's seat summary {summary}"
+                )
+        frame["Year"], frame["month"], frame["Poll_No"] = item["year"], item["month"], 0
+        frame["Election_Type"] = ELECTION_TYPE[item["election"]]
+        frames.append(map_parties(frame, parties))
+    table = pd.concat(frames, ignore_index=True)
+    for col in ["Electors", "Age", "Assembly_No", "Votes"]:
+        table[col] = pd.to_numeric(table.get(col), errors="coerce")
+    for col in ["Sex", "Candidate_Type"]:
+        if col not in table:
+            table[col] = None
+    return derive(table, CONTEST)
+
+
 def gate(frame, item, tcpd):
     """Stop the build if a seat is missing or the totals disagree."""
     label = f"{item['election']} {item['year']} {item['state']}"
@@ -566,6 +657,8 @@ def main():
     by_tables = byelection_tables(by_rows, generals, theirs, parties)
     outputs = [(e, OUTPUT[e], tables[e]) for e in OUTPUT]
     outputs += [(e, BY_OUTPUT[e], by_tables[e]) for e in BY_OUTPUT]
+    adjourned = adjourned_table(source, tcpd["assembly"], parties)
+    outputs += [("assembly", ADJOURNED_OUTPUT, adjourned)]
     for election, name, table in outputs:
         named = table["Party"].ne("IND") & table["Party"].ne("NOTA")
         unmatched.append(
@@ -591,7 +684,7 @@ def main():
         "sha256": sha256(byelections.CARDS_OUT),
     }
     audit = (
-        pd.concat([*tables.values(), *by_tables.values()])
+        pd.concat([*tables.values(), *by_tables.values(), adjourned])
         .query("Party_Match not in ['independent', 'nota']")
         .groupby(
             [

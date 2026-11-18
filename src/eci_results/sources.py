@@ -5,6 +5,8 @@ Party_Source (the party as the source prints it), Votes, and, where the
 source has them, Sex, Age, Candidate_Type and Electors.
 """
 
+import re
+from collections import defaultdict
 from pathlib import Path
 
 import pandas as pd
@@ -151,7 +153,105 @@ def read_azadecon(folder):
     )
 
 
+def form20_columns(page, count):
+    """Each vote column's header text on Form 20's first page, from the
+    words above the first booth row, grouped by the column they sit over."""
+    words = page.extract_words()
+    lines = defaultdict(list)
+    for word in words:
+        lines[round(word["top"])].append(word)
+    first = next(
+        top
+        for top in sorted(lines)
+        if len(lines[top]) == count
+        and all(w["text"].isdigit() for w in lines[top])
+        and min(lines[top], key=lambda w: w["x0"])["text"] == "1"
+    )
+    centers = [
+        (w["x0"] + w["x1"]) / 2 for w in sorted(lines[first], key=lambda w: w["x0"])
+    ]
+    booth = max(w["top"] for w in words if w["text"] == "Booth" and w["top"] < first)
+    heads = defaultdict(list)
+    for word in words:
+        if booth - 2 <= word["top"] < first - 2:
+            middle = (word["x0"] + word["x1"]) / 2
+            heads[min(range(count), key=lambda k: abs(middle - centers[k]))].append(
+                word
+            )
+    return [
+        " ".join(
+            w["text"]
+            for w in sorted(heads[k], key=lambda w: (round(w["top"]), w["x0"]))
+        )
+        for k in range(count)
+    ]
+
+
+def read_eci_form20(path):
+    """Form 20, the final result sheet of one assembly seat (a PDF with one
+    row per polling station, then postal votes and totals).
+
+    Candidate names and parties are listed, in column order, in
+    candidates.csv beside the PDF, because the PDF breaks them across lines;
+    each must equal its column's header text in the PDF, spaces aside. The
+    booth rows must add up to the "recorded at polling station" row, that row
+    plus postal votes to the totals, and the candidates to total valid votes.
+    Form 20 does not record candidates' sex, age or category.
+    """
+    import pdfplumber
+
+    path = Path(path)
+    people = pd.read_csv(path.with_name("candidates.csv")).sort_values("column")
+    count = len(people) + 6  # booth, candidates, valid, rejected, NOTA, total, tendered
+    with pdfplumber.open(path) as pdf:
+        text = "\n".join(page.extract_text(layout=True) or "" for page in pdf.pages)
+        heads = form20_columns(pdf.pages[0], count)
+    squash = lambda t: re.sub(r"\s+", "", str(t)).upper()  # noqa: E731
+    for k, row in enumerate(people.itertuples(), start=1):
+        if squash(heads[k]) != squash(f"{row.Candidate} {row.Party_Source}"):
+            raise SystemExit(f"{path}: column {k} reads {heads[k]!r}")
+    booths, totals = [], []
+    for line in text.splitlines():
+        words = line.split()
+        tail = len(words)
+        while tail and words[tail - 1].isdigit():
+            tail -= 1
+        values = [int(x) for x in words[tail:]]
+        if tail == 0 and len(values) == count:
+            booths.append(values)
+        elif len(values) == count - 1:  # a totals row, its label maybe in front
+            totals.append(values)
+    recorded, postal, total = totals[-3:]
+    if [r[0] for r in booths] != list(range(1, len(booths) + 1)):
+        raise SystemExit(f"{path}: booth numbers do not run 1..n")
+    if [sum(col) for col in zip(*(r[1:] for r in booths))] != recorded:
+        raise SystemExit(f"{path}: booths do not add up to the recorded votes")
+    if [a + b for a, b in zip(recorded, postal)] != total:
+        raise SystemExit(f"{path}: recorded and postal votes do not add up")
+    votes, valid, nota = (
+        total[: len(people)],
+        total[len(people)],
+        total[len(people) + 2],
+    )
+    if sum(votes) != valid:
+        raise SystemExit(f"{path}: candidates do not add up to total valid votes")
+    seat = re.search(r"Name of the Assembly Constituency\s*:\s*(\d+)-(.+?)\s+AC", text)
+    electors = int(re.search(r"Total No\.? of Electors[^:]*:\s*(\d+)", text)[1])
+    frame = pd.DataFrame(
+        {
+            "Constituency_No": int(seat[1]),
+            "Constituency_Name": seat[2].strip().upper(),
+            "Candidate": list(people["Candidate"]) + ["None of the Above"],
+            "Party_Source": list(people["Party_Source"]) + ["NOTA"],
+            "Votes": votes + [nota],
+            "Electors": electors,
+        }
+    )
+    return mark_nota(frame)
+
+
 READERS = {
+    "eci_form20": read_eci_form20,
     "eci_detailed": read_eci_detailed,
     "azadecon": read_azadecon,
     "eci_report": read_eci_report,

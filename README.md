@@ -101,7 +101,8 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 Karanpur (Rajasthan, seat 3) is dated January 2024: ECI's 2023 report includes
 it, but its poll was adjourned to 5 January 2024 after a candidate died.
 Surat (Lok Sabha 2024) is missing because its candidate was elected unopposed
-and ECI's report leaves it out. By-elections are in a file of their own (below).
+and ECI's report leaves it out. By-elections, and two adjourned polls missing
+from TCPD's own general elections, are in files of their own (below).
 
 ## By-elections, 2022 to 2026
 
@@ -160,6 +161,37 @@ GEN for them.
 by-elections TCPD has match TCPD's rows in every seat fact, every candidate's
 votes, position, party and deposit, and NOTA's votes
 ([`byelection_check.csv`](data/release/byelection_check.csv), `make validate`).
+
+## Adjourned polls missing from TCPD
+
+[`AE_adjourned_2019_2023.csv.gz`](data/release/AE_adjourned_2019_2023.csv.gz)
+has two seats whose poll was adjourned and held after a general election that
+TCPD covers, and which TCPD's rows lack:
+
+| Seat | General election | Poll held | Source |
+|---|---|---|---|
+| Sohiong (Meghalaya, 23) | 2023, assembly 11 | 10 May 2023 | ECI's Meghalaya 2023 report "Including AC-23": "10 - Detailed Results", checked against Sohiong's page of "8 - Constituency Data Summary" (electors, total valid votes, NOTA) |
+| Patkura (Odisha, 96) | 2019, assembly 16 | 20 July 2019 | Form 20, the final result sheet, from the Chief Electoral Officer, Odisha |
+
+Both are coded as TCPD codes an adjourned poll: part of the general election
+(`Poll_No` 0, its `Assembly_No`), with the seat's facts from its latest TCPD
+row, and `Year` and `month` of the poll actually held. The build stops if a
+seat's name or reservation differs from TCPD's, if TCPD already has the seat,
+or if Sohiong's summary page disagrees with its rows.
+
+- ECI's Odisha 2019 report leaves Patkura out (its Detailed Results has 146 of
+  147 seats) and no index card for it was found, so its source is Form 20. The
+  reader checks Form 20 against itself: the 309 polling-station rows add up to
+  the recorded votes, recorded and postal votes to the totals, and the
+  candidates to total valid votes; each candidate's name and party in
+  [`candidates.csv`](data/raw/eci_reports/adjourned/odisha_2019_patkura/candidates.csv)
+  must equal its column's header in the PDF. Form 20 gives no date (the poll
+  date is ECI's schedule as reported) and no sex, age or category, which are
+  empty.
+- The Meghalaya report that includes Sohiong leaves out the NOTA rows of the
+  other 59 seats. Its candidate rows for those seats equal the version without
+  Sohiong. TCPD's 2023 rows equal that version in every vote count in 55 of the
+  59 seats; in seats 44, 49, 50 and 52 a row differs, by up to 155 votes.
 
 ## What each column holds
 
@@ -229,6 +261,10 @@ in [`data/source.json`](data/source.json).
   Results" listings of eci.gov.in (2025 on) and old.eci.gov.in (2022 to 2024).
   `MANIFEST.csv` gives each file's source page, address or file id, SHA-256,
   server date and retrieval time; `fetch_log.jsonl` has every request.
+- [`data/raw/eci_reports/adjourned/`](data/raw/eci_reports/adjourned/): the
+  files for Sohiong and Patkura (above), and ECI's Odisha 2019 Detailed Results
+  that leave Patkura out, downloaded by Priyadarshi Amar on 18 November 2026;
+  `MANIFEST.csv` and `fetch_log.jsonl` as for the by-elections.
 - [`data/raw/wayback/`](data/raw/wayback/): ECI's results website as archived by
   the Internet Archive, fetched by
   [`fetch_wayback.py`](src/eci_results/fetch_wayback.py) and parsed by
