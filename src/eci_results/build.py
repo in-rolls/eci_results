@@ -45,7 +45,7 @@ ELECTION_TYPE = {
 }
 TCPD_FILE = {"lok_sabha": "tcpd_GE", "assembly": "tcpd_AE"}
 OUTPUT = {"lok_sabha": "GE_2024.csv.gz", "assembly": "AE_2023_2026.csv.gz"}
-ADJOURNED_OUTPUT = "AE_adjourned_2019_2023.csv.gz"
+ADJOURNED_OUTPUT = "AE_adjourned_2016_2023.csv.gz"
 BY_OUTPUT = {
     "lok_sabha": "GE_byelections_2022_2026.csv.gz",
     "assembly": "AE_byelections_2022_2026.csv.gz",
@@ -354,10 +354,6 @@ def build_election(item, tcpd, parties, numbers):
         frame = carry_assembly(frame, tcpd, item["state"])
     frame = map_parties(frame, parties)
     frame["Year"], frame["month"], frame["Poll_No"] = item["year"], item["month"], 0
-    # A seat polled on another date (Karanpur, adjourned to January 2024).
-    for seat, date in item.get("seat_dates", {}).items():
-        here = frame["Constituency_No"].eq(int(seat))
-        frame.loc[here, "Year"], frame.loc[here, "month"] = date["year"], date["month"]
     frame["Election_Type"] = ELECTION_TYPE[item["election"]]
     for col in ["Electors", "Age", "Assembly_No"]:
         frame[col] = pd.to_numeric(frame.get(col), errors="coerce")
@@ -478,38 +474,82 @@ def byelection_tables(rows, generals, theirs, parties):
     return out
 
 
-def constituency_summary(path, sheet):
-    """Electors, total valid votes and NOTA from one seat's page of ECI's
-    report "8 - Constituency Data Summary"."""
-    raw = pd.read_excel(path, sheet_name=sheet, header=None, dtype=object)
+SUMMARY_LINES = {
+    "contested": r"^4\.\s*Contested",
+    "electors": r"^4\.\s*Total$",
+    "valid": r"^7\.\s*Total\s*Valid Votes Polled",
+    "nota": r"^9\.\s*VOTES POLLED FOR 'NOTA'",
+}
+
+
+def constituency_summary(path, seat, sheet=None):
+    """Candidates contested, electors, total valid votes and NOTA from one
+    seat's page of ECI's report "Constituency Data Summary": a sheet of the
+    xlsx, or the seat's block of the PDF ("CONSTITUENCY : 67- Ramgarh")."""
+    path = Path(path)
+    if path.suffix == ".pdf":
+        import pdfplumber
+
+        with pdfplumber.open(path) as pdf:
+            text = "\n".join(p.extract_text(layout=True) or "" for p in pdf.pages)
+        blocks = re.split(r"CONSTITUENCY\s*:\s*", text)
+        block = next(b for b in blocks[1:] if re.match(rf"{seat}\s*-", b))
+        lines = [re.split(r"\s{2,}", line.strip()) for line in block.splitlines()]
+    else:
+        raw = pd.read_excel(path, sheet_name=sheet, header=None, dtype=object)
+        lines = [
+            [str(c) for c in row if pd.notna(c)] for row in raw.itertuples(index=False)
+        ]
     values = {}
-    for row in raw.itertuples(index=False):
-        cells = [c for c in row if pd.notna(c)]
-        label = str(cells[0]) if cells else ""
+    for cells in lines:
+        label = cells[0].strip() if cells else ""
         numbers = [c for c in cells[1:] if str(c).replace(".", "").isdigit()]
-        for name, pattern in {
-            "electors": r"^4\. Total$",
-            "valid": r"^7\. Total Valid Votes Polled",
-            "nota": r"^9\. VOTES POLLED FOR 'NOTA'",
-        }.items():
-            if (
-                numbers
-                and re.search(pattern, label.strip(), re.I)
-                and name not in values
-            ):
+        for name, pattern in SUMMARY_LINES.items():
+            if numbers and name not in values and re.search(pattern, label, re.I):
                 values[name] = int(float(numbers[-1]))
     return values
+
+
+def adjourned_term(tcpd, state, seat, general_year, poll_date):
+    """Assembly_No, Year and month for a seat whose poll was adjourned and held
+    after a general election, from that election's own rows in TCPD.
+
+    The general election must be the state's latest in TCPD on or before the
+    poll (by-election rows, Poll_No above 0, do not count), and TCPD's rows
+    for it must lack the seat. Year and month are the general election's, as
+    TCPD codes its own adjourned polls (Jayanagar 2018, Vellore 2019).
+    """
+    label = f"adjourned poll {state} {seat}"
+    generals = tcpd[tcpd["State_Name"].eq(state) & tcpd["Poll_No"].eq(0)]
+    held = pd.Timestamp(poll_date)
+    before = generals[
+        generals["Year"] * 100 + generals["month"] <= held.year * 100 + held.month
+    ]
+    if before.empty or before["Year"].max() != general_year:
+        raise SystemExit(
+            f"{label}: {general_year} is not {state}'s latest general election "
+            f"before {poll_date}"
+        )
+    rows = generals[generals["Year"].eq(general_year)]
+    if rows["Constituency_No"].eq(seat).any():
+        raise SystemExit(f"{label}: TCPD already has this seat in {general_year}")
+    term = rows[["Assembly_No", "Year", "month"]].drop_duplicates()
+    if len(term) != 1:
+        raise SystemExit(
+            f"{label}: TCPD's {general_year} rows give {len(term)} terms or months"
+        )
+    return term.iloc[0].to_dict()
 
 
 def adjourned_table(source, tcpd, parties):
     """Seats whose poll was adjourned and held after a general election TCPD
     has, but which TCPD's rows lack (source.json "adjourned").
 
-    Each is part of that general election, as TCPD codes such polls: Poll_No
-    0, the election's Assembly_No, and the seat's facts from its latest TCPD
-    row on the same boundaries (last_election). Year and month are the
-    adjourned poll's. The build stops if the seat's name or reservation
-    differs from TCPD's, or if a seat summary disagrees with the rows.
+    Each is part of that general election: Poll_No 0, with Assembly_No, Year
+    and month from the election's own rows (adjourned_term), and the seat's
+    facts from its latest TCPD row on the same boundaries (last_election). The
+    build stops if the seat's name or reservation differs from TCPD's, or if a
+    seat summary disagrees with the rows.
     """
     frames = []
     for item in source.get("adjourned", []):
@@ -519,18 +559,12 @@ def adjourned_table(source, tcpd, parties):
             check(item["candidates"])
         frame = READERS[item["format"]](check(item))
         frame = frame[frame["Constituency_No"].eq(seat)].copy()
+        if frame.empty:
+            raise SystemExit(f"{label}: not in {item['path']}")
         frame["State_Name"] = state
-        rows = tcpd[tcpd["State_Name"].eq(state)]
-        if rows["Year"].max() != item["general_year"]:
-            raise SystemExit(
-                f"{label}: TCPD's latest {state} election is not {item['general_year']}"
-            )
-        if (
-            rows[rows["Year"].eq(item["general_year"])]["Constituency_No"]
-            .eq(seat)
-            .any()
-        ):
-            raise SystemExit(f"{label}: TCPD already has this seat")
+        term = adjourned_term(
+            tcpd, state, seat, item["general_year"], item["poll_date"]
+        )
         facts = last_election(tcpd, state).loc[seat]
         name = frame["Constituency_Name"].iloc[0]
         if key(facts["Constituency_Name"]) != key(name):
@@ -540,14 +574,15 @@ def adjourned_table(source, tcpd, parties):
             and frame["Constituency_Type"].ne(facts["Constituency_Type"]).any()
         ):
             raise SystemExit(f"{label}: reservation differs from TCPD")
-        for col in SEAT_FACTS + ["Assembly_No", "Constituency_Name"]:
+        for col in SEAT_FACTS + ["Constituency_Name"]:
             frame[col] = facts[col]
         if "summary" in item:
             summary = constituency_summary(
-                check(item["summary"]), item["summary"]["sheet"]
+                check(item["summary"]), seat, item["summary"].get("sheet")
             )
             nota = frame["Party_Source"].eq("NOTA")
             found = {
+                "contested": int((~nota).sum()),
                 "electors": int(frame["Electors"].iloc[0]),
                 "valid": int(frame.loc[~nota, "Votes"].sum()),
                 "nota": int(frame.loc[nota, "Votes"].sum()),
@@ -556,7 +591,12 @@ def adjourned_table(source, tcpd, parties):
                 raise SystemExit(
                     f"{label}: rows give {found}, ECI's seat summary {summary}"
                 )
-        frame["Year"], frame["month"], frame["Poll_No"] = item["year"], item["month"], 0
+        frame["Assembly_No"], frame["Year"], frame["month"] = (
+            term["Assembly_No"],
+            term["Year"],
+            term["month"],
+        )
+        frame["Poll_No"] = 0
         frame["Election_Type"] = ELECTION_TYPE[item["election"]]
         frames.append(map_parties(frame, parties))
     table = pd.concat(frames, ignore_index=True)
@@ -700,15 +740,18 @@ def main():
         .size()
         .rename("candidates")
         .reset_index()
-        .sort_values("candidates", ascending=False)
+        .sort_values(
+            ["candidates", "Party_Source", "State_Name"], ascending=[False, True, True]
+        )
     )
     audit_out = RELEASE / "party_matches.csv"
     audit.to_csv(audit_out, index=False)
     manifest["files"][str(audit_out)] = {"sha256": sha256(audit_out)}
     parties_out = RELEASE / "parties_not_in_ppi.csv"
-    pd.concat(unmatched).sort_values("candidates", ascending=False).to_csv(
-        parties_out, index=False
-    )
+    pd.concat(unmatched).sort_values(
+        ["candidates", "State_Name", "Year", "Party", "election"],
+        ascending=[False, True, True, True, True],
+    ).to_csv(parties_out, index=False)
     manifest["files"][str(parties_out)] = {"sha256": sha256(parties_out)}
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
     update_readme(coverage(tables))
