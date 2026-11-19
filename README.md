@@ -224,7 +224,90 @@ its candidates, electors, total valid votes and NOTA must equal the rows.
   count in 55 of the 59 seats; in seats 44, 49, 50 and 52 a row differs, by up
   to 155 votes.
 
-Before 2008 TCPD lacks more seats; they are not covered yet.
+## Seats TCPD lacks before 2008
+
+Before the 2008 delimitation, TCPD's general elections lack 70 seats, found the
+same way (seat numbers missing from 1 to the state's last seat) and listed as
+59 entries, Assam's twelve 1980 Lok Sabha seats being one.
+[`data/tcpd_gaps.csv`](data/tcpd_gaps.csv) classifies each one, with the ECI
+document that decides it (a file under `data/raw/eci_reports/adjourned/`) and
+the line of evidence. The build checks that file: every seat it lists must be
+missing from TCPD's general election of that year, every source must be in
+`MANIFEST.csv`, and the seats marked added must be exactly the seats built.
+
+[`AE_missing_before_2008.csv.gz`](data/release/AE_missing_before_2008.csv.gz)
+has the 13 that ECI reports with every candidate, 37 rows. ECI's report decides
+the coding. A seat in the general election's own report is `Poll_No` 0 with
+that election's `Assembly_No`, `Year` and `month`; a seat ECI lists among
+by-elections is coded as the by-elections file codes one (the term's
+`Assembly_No`, the poll's year and month, `Poll_No` 1).
+
+| Seats | Outcome | Coded | Source |
+|---|---|---|---|
+| Arunachal Pradesh 1999: Anini (41); 2004: Mukto (3), Dirang (4), Sagalee (15); Sikkim 2004: Wak (12), Damthang (13), Melli (14), Kabi Tingda (25) | Won unopposed | Poll_No 0, one row, Votes 0 | ECI's report for that election: one contesting candidate, "Uncontested" |
+| Assam 1996: Dispur (52), Dergaon (97), Nazira (104), Margherita (124) | Polled 11 October 1996 | Poll_No 1, 1996, month 10 | ECI's by-election results, 1996 (not in ECI's 1996 report) |
+| Uttar Pradesh 1996: Shikarpur (385) | Polled 8 February 1997 | Poll_No 1, 1997, month 2 | ECI's by-election results, February 1997 (not in ECI's 1996 report) |
+
+An unopposed winner is one row with `Votes` 0, `Valid_Votes` 0,
+`Turnout_Percentage` 0, `Deposit_Lost` "no" and `Margin` 0, as in 220 of
+TCPD's 268 one-candidate rows. (The 2024 and by-election files here leave
+those columns empty for unopposed seats instead.) Each by-election page is
+checked against itself: its candidates must be as many as its count of
+contesting candidates and add up to its valid votes, and its general and
+service electors to its total. For an unopposed seat, the seat summary must
+count one contesting candidate, and Detailed Results must list that one
+candidate as the summary's winner. Seat facts come from the seat's latest TCPD
+row on the same boundaries, and the build stops if ECI's name or reservation
+differs (ECI spells Dergaon "Dergoan"; TCPD types Sikkim's Bhutia-Lepcha seats
+ST until 1999 and BL from 2004, as ECI does in 2004). Four Assam candidates'
+sex is blank on ECI's page and stays empty. Matching parties ignores the year,
+so a match to a party PPI first records after the poll is dropped: `LSP` in
+Shikarpur, 1997, is not the Lok Satta Party of 2006.
+
+The other 46 entries are not added:
+
+- **Polled later, no candidate results (2).** Beas (Punjab 2007, 12): ECI's
+  report has its seat summary only (winner Manjinder Singh Kang, SAD, 53,014
+  votes) and prints the original polling date, 13 February; the poll was
+  deferred to 11 March 2007 after violence (The Tribune, UNI). Bajpur
+  (Uttarakhand 2007, 59): the Chief Electoral Officer's press note of
+  21 February 2007 reopens nominations for the Congress candidate only and
+  sets the poll for 25 March; ECI's report has the seat summary only, and the
+  CEO's AC-wise result marks it "Election is scheduled for 25-3-2007". No
+  Form 20 turned up for either.
+- **In TCPD as a by-election (3).** Rajakhera (Rajasthan 1993) and Hastinapur
+  (Uttar Pradesh 1993), polled 1994, and Patna (Lok Sabha 1991), polled 1993,
+  are TCPD rows with `Poll_No` 1. ECI's by-election workbook for 1952 to 1995
+  lists all three; for the two assembly seats TCPD has only the workbook's
+  winner and runner-up.
+- **Not polled before the next general election (20).** Shampukur (West Bengal
+  1971): "poll countermanded ... due to death of the candidate"; it is in the
+  March 1972 general election. Lungleh (Assam 1967): "no nomination filed".
+  Assam 1983, 17 seats: ECI's report has 109 of 126; 14 have no page and three
+  (Bongaigaon, Dhekiajuli, Sootea) a blank one. Lok Sabha 1980, 12 of Assam's
+  14 seats: the 1980 volume's Assam electorate (1,209,486) is Karimganj's and
+  Silchar's; all 14 polled in 1985, as part of the 8th Lok Sabha. ECI records
+  no poll for any of these before the next general election.
+- **Unresolved (20).** ECI's reports note a countermand or the lack of a
+  nomination for Nathupur (Uttar Pradesh 1974, 207), Viramgam (Gujarat 1975,
+  63) and Chilka (Odisha 1974, 58), and leave out without a note six Manipur
+  1990 seats (1, 2, 4, 5, 20, 21), Kulu (Himachal Pradesh 1990, 56),
+  Manjhanpur (Uttar Pradesh 1993, 279), six Meerut-district seats (Uttar
+  Pradesh 1991: Agota, Kithore, Hastinapur, Meerut Cantonment, Meerut,
+  Kharkhauda) and, in the Lok Sabha, Purnea and Meerut (1991) and Shillong
+  (1980). ECI publishes no result for a later poll in any of them. Its
+  by-election workbook is incomplete (it has no entries at all for 1973 to
+  1977, and lists Meerut's later winner without a year or votes), so its
+  silence does not show that a seat was never polled.
+- **ECI's report merges two seats (1).** Delhi 1983 prints Krishan Nagar (30)
+  as a second seat 31 beside Gandhi Nagar, with one candidate list. TCPD's
+  Gandhi Nagar rows are Krishan Nagar's result: they add up to its 68,518
+  valid votes and carry its 136,384 electors. Gandhi Nagar's own candidates
+  are not in the report, so neither seat can be set right from it.
+
+The seat numbers are TCPD's. The ECI reports and volumes are in
+`data/raw/eci_reports/adjourned/` with the rest, downloaded on 19 November
+2026.
 
 ## What each column holds
 
@@ -298,7 +381,14 @@ in [`data/source.json`](data/source.json).
   files for the five adjourned polls (above), ECI's Tamil Nadu 2016 and Odisha
   2019 Detailed Results that leave three of them out, and the Tamil Nadu Form
   7A lists, downloaded by Priyadarshi Amar on 18 and 19 November 2026;
-  `MANIFEST.csv` and `fetch_log.jsonl` as for the by-elections.
+  `MANIFEST.csv` and `fetch_log.jsonl` as for the by-elections. The same
+  folder has the files for the seats TCPD lacks before 2008 (above), downloaded
+  on 19 November 2026: ECI's statistical reports for each election concerned
+  (old.eci.gov.in, one PDF each, with a text layer), its Lok Sabha volumes for
+  1980, 1985, 1991 and 1992, its by-election results of 1996 and 1997 and its
+  workbook of by-elections from 1952 to 1995, and the Chief Electoral
+  Officer, Uttarakhand's 2007 press note, notification, candidate list and
+  AC-wise result.
 - [`data/raw/wayback/`](data/raw/wayback/): ECI's results website as archived by
   the Internet Archive, fetched by
   [`fetch_wayback.py`](src/eci_results/fetch_wayback.py) and parsed by

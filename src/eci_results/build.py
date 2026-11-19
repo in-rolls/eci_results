@@ -46,6 +46,9 @@ ELECTION_TYPE = {
 TCPD_FILE = {"lok_sabha": "tcpd_GE", "assembly": "tcpd_AE"}
 OUTPUT = {"lok_sabha": "GE_2024.csv.gz", "assembly": "AE_2023_2026.csv.gz"}
 ADJOURNED_OUTPUT = "AE_adjourned_2016_2023.csv.gz"
+MISSING_OUTPUT = "AE_missing_before_2008.csv.gz"
+GAPS = Path("data/tcpd_gaps.csv")
+ADJOURNED_RAW = Path("data/raw/eci_reports/adjourned")
 BY_OUTPUT = {
     "lok_sabha": "GE_byelections_2022_2026.csv.gz",
     "assembly": "AE_byelections_2022_2026.csv.gz",
@@ -608,6 +611,162 @@ def adjourned_table(source, tcpd, parties):
     return derive(table, CONTEST)
 
 
+def facts_before(tcpd, state, seat, general_year):
+    """A seat's facts from its latest TCPD general-election row on the
+    boundaries of the general election of `general_year` (same DelimID), up to
+    and including that year."""
+    rows = tcpd[tcpd["State_Name"].eq(state) & tcpd["Poll_No"].eq(0)]
+    delim = rows.loc[rows["Year"].eq(general_year), "DelimID"].unique()
+    if len(delim) != 1:
+        raise SystemExit(f"{state} {general_year}: DelimID {list(delim)}")
+    rows = rows[
+        rows["DelimID"].eq(delim[0])
+        & rows["Year"].le(general_year)
+        & rows["Constituency_No"].eq(seat)
+    ]
+    if rows.empty:
+        raise SystemExit(f"{state} {seat}: no TCPD row on {general_year}'s boundaries")
+    return rows.sort_values("Year").iloc[-1]
+
+
+def same_seat(theirs, ours):
+    """Seat names agree, allowing ECI's spellings (Dergoan for Dergaon)."""
+    a, b = key(theirs), key(ours)
+    ratio = difflib.SequenceMatcher(None, a, b).ratio()
+    return ratio >= SEAT_NAME_MATCH or a in b or b in a
+
+
+def missing_table(source, tcpd, theirs, parties):
+    """Seats missing from TCPD's general elections before 2008 that ECI
+    reports (source.json "pre2008"; every listed seat is in data/tcpd_gaps.csv).
+
+    ECI's report decides the coding. A seat in the general election's own
+    statistical report (the unopposed seats) is Poll_No 0 with the election's
+    Assembly_No, Year and month. A seat ECI lists among by-elections (the
+    adjourned Assam 1996 and Uttar Pradesh 1996 polls) is coded as the
+    by-elections file codes one: the term's Assembly_No, Year and month of the
+    poll, and Poll_No after any by-election TCPD has for the seat in that term
+    (the build stops if TCPD has one, since the order would then need
+    checking). Seat facts come from the seat's latest TCPD row on the same
+    boundaries; the build stops if the name or reservation differs.
+    """
+    frames = []
+    for item in source.get("pre2008", []):
+        state, seat = item["state"], item["seat"]
+        label = f"{item['election']} {state} {item['general_year']} seat {seat}"
+        frame = READERS[item["format"]](check(item))
+        frame = frame[frame["Constituency_No"].eq(seat)].copy()
+        if frame.empty:
+            raise SystemExit(f"{label}: not in {item['path']}")
+        frame["State_Name"] = state
+        poll_date = item.get("poll_date")
+        if poll_date is None:
+            # Unopposed: no poll; check the term against the election's month.
+            general = tcpd[
+                tcpd["State_Name"].eq(state) & tcpd["Year"].eq(item["general_year"])
+            ]
+            poll_date = f"{item['general_year']}-{int(general['month'].max()):02d}-01"
+        if "Poll_Date" in frame and frame["Poll_Date"].ne(poll_date).any():
+            raise SystemExit(f"{label}: source gives {frame['Poll_Date'].iloc[0]}")
+        term = adjourned_term(tcpd, state, seat, item["general_year"], poll_date)
+        facts = facts_before(tcpd, state, seat, item["general_year"])
+        name = frame["Constituency_Name"].iloc[0]
+        if not same_seat(facts["Constituency_Name"], name):
+            raise SystemExit(f"{label}: name {name}, TCPD {facts['Constituency_Name']}")
+        kind = frame["Constituency_Type"].iloc[0]
+        # TCPD types Sikkim's Bhutia-Lepcha seats ST until 1999 and BL from 2004.
+        if kind != facts["Constituency_Type"] and (
+            kind,
+            facts["Constituency_Type"],
+        ) != (
+            "BL",
+            "ST",
+        ):
+            raise SystemExit(f"{label}: type {kind}, TCPD {facts['Constituency_Type']}")
+        for col in SEAT_FACTS + ["Constituency_Name"]:
+            if col != "Constituency_Type":
+                frame[col] = facts[col]
+        frame["Assembly_No"] = term["Assembly_No"]
+        if item["poll_no"] == 0:
+            frame["Year"], frame["month"] = term["Year"], term["month"]
+            frame["Poll_No"] = 0
+        else:
+            held = pd.Timestamp(poll_date)
+            prior = theirs[
+                theirs["election"].eq(item["election"])
+                & theirs["State_Name"].eq(state)
+                & theirs["Assembly_No"].eq(term["Assembly_No"])
+                & theirs["Constituency_No"].eq(seat)
+            ]
+            if not prior.empty:
+                raise SystemExit(f"{label}: TCPD has by-elections in this term")
+            frame["Year"], frame["month"], frame["Poll_No"] = held.year, held.month, 1
+        frame["Election_Type"] = ELECTION_TYPE[item["election"]]
+        frames.append(map_parties(frame, parties))
+    table = pd.concat(frames, ignore_index=True)
+    # Labels are matched without regard to year; a party PPI first records
+    # after the poll is another party (LSP in Uttar Pradesh, 1997, is not the
+    # Lok Satta Party of 2006), so the label stays unmatched.
+    ppi = pd.read_csv(check(source["reference"]["ppi"]), low_memory=False)
+    start = ppi.groupby("Party_ID")["Start_Year"].min()
+    later = table["Party_ID"].map(start).gt(table["Year"])
+    table.loc[later, "Party"] = table.loc[later, "Party_Source"]
+    table.loc[later, ["Party_ID", "Party_Match"]] = [None, "unmatched"]
+    for col in ["Electors", "Age", "Assembly_No", "Votes"]:
+        table[col] = pd.to_numeric(table.get(col), errors="coerce")
+    for col in ["Sex", "Candidate_Type"]:
+        if col not in table:
+            table[col] = None
+    table = derive(table, CONTEST)
+    gaps_gate(source, table, theirs)
+    return table
+
+
+def gaps_gate(source, table, theirs):
+    """Stop unless data/tcpd_gaps.csv and the built rows agree: every seat
+    marked added is built with that Poll_No and nothing else is; every listed
+    seat is missing from TCPD's general election of that year; seats marked
+    "in TCPD as a by-election" have a TCPD by-election in the term; and each
+    seat's source is a file in MANIFEST.csv."""
+    gaps = pd.read_csv(GAPS, dtype={"seat": str})
+    listed = set(pd.read_csv(ADJOURNED_RAW / "MANIFEST.csv")["path"])
+    tcpd = {
+        e: pd.read_csv(check(source["reference"][f]), low_memory=False)
+        for e, f in TCPD_FILE.items()
+    }
+    problems = []
+    for g in gaps.itertuples():
+        first, _, last = g.seat.partition("-")
+        seats = range(int(first), int(last or first) + 1)
+        rows = tcpd[g.election]
+        rows = rows[rows["State_Name"].eq(g.state) & rows["Poll_No"].eq(0)]
+        if rows[rows["Year"].eq(g.year) & rows["Constituency_No"].isin(seats)].shape[0]:
+            problems.append(f"{g.state} {g.year} {g.seat}: TCPD has it")
+        if g.source not in listed:
+            problems.append(f"{g.state} {g.year} {g.seat}: {g.source} not in MANIFEST")
+        if g.outcome == "in TCPD as a by-election":
+            term = rows.loc[rows["Year"].eq(g.year), "Assembly_No"].iloc[0]
+            found = theirs[
+                theirs["election"].eq(g.election)
+                & theirs["State_Name"].eq(g.state)
+                & theirs["Assembly_No"].eq(term)
+                & theirs["Constituency_No"].isin(seats)
+            ]
+            if found.empty:
+                problems.append(f"{g.state} {g.year} {g.seat}: no TCPD by-election")
+    added = gaps[gaps["outcome"].str.startswith("added")]
+    want = {(r.state, int(r.seat), int(r.poll_no)) for r in added.itertuples()}
+    built = set(
+        zip(table["State_Name"], table["Constituency_No"].astype(int), table["Poll_No"])
+    )
+    if want != built:
+        problems.append(
+            f"tcpd_gaps.csv adds {sorted(want - built)}, built {sorted(built - want)}"
+        )
+    if problems:
+        raise SystemExit("data/tcpd_gaps.csv:\n" + "\n".join(problems))
+
+
 def gate(frame, item, tcpd):
     """Stop the build if a seat is missing or the totals disagree."""
     label = f"{item['election']} {item['year']} {item['state']}"
@@ -699,6 +858,8 @@ def main():
     outputs += [(e, BY_OUTPUT[e], by_tables[e]) for e in BY_OUTPUT]
     adjourned = adjourned_table(source, tcpd["assembly"], parties)
     outputs += [("assembly", ADJOURNED_OUTPUT, adjourned)]
+    missing = missing_table(source, tcpd["assembly"], theirs, parties)
+    outputs += [("assembly", MISSING_OUTPUT, missing)]
     for election, name, table in outputs:
         named = table["Party"].ne("IND") & table["Party"].ne("NOTA")
         unmatched.append(
@@ -724,7 +885,7 @@ def main():
         "sha256": sha256(byelections.CARDS_OUT),
     }
     audit = (
-        pd.concat([*tables.values(), *by_tables.values(), adjourned])
+        pd.concat([*tables.values(), *by_tables.values(), adjourned, missing])
         .query("Party_Match not in ['independent', 'nota']")
         .groupby(
             [
