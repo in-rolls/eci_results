@@ -266,15 +266,69 @@
         "Election_Type": 1.0
       }
     },
+    "data/release/AE_missing_before_2008.csv.gz": {
+      "rows": 37,
+      "contests": 13,
+      "sha256": "142f9853966fcf34ba9b9ac32ff3a2edc7f44ee09a08403c9e0520edbb96dee8",
+      "filled_share": {
+        "State_Name": 1.0,
+        "Assembly_No": 1.0,
+        "Constituency_No": 1.0,
+        "Year": 1.0,
+        "month": 1.0,
+        "DelimID": 1.0,
+        "Poll_No": 1.0,
+        "Position": 1.0,
+        "Candidate": 1.0,
+        "Sex": 0.8108,
+        "Party": 1.0,
+        "Votes": 1.0,
+        "Age": 0.1892,
+        "Candidate_Type": 0.1892,
+        "Valid_Votes": 1.0,
+        "Electors": 1.0,
+        "Constituency_Name": 1.0,
+        "Constituency_Type": 1.0,
+        "District_Name": 0.0,
+        "Sub_Region": 0.0,
+        "N_Cand": 1.0,
+        "Turnout_Percentage": 1.0,
+        "Vote_Share_Percentage": 0.7838,
+        "Deposit_Lost": 1.0,
+        "Margin": 1.0,
+        "Margin_Percentage": 0.7838,
+        "ENOP": 0.0,
+        "pid": 0.0,
+        "Party_Type_TCPD": 0.0,
+        "Party_ID": 0.973,
+        "last_poll": 0.0,
+        "Contested": 0.0,
+        "Last_Party": 0.0,
+        "Last_Party_ID": 0.0,
+        "Last_Constituency_Name": 0.0,
+        "Same_Constituency": 0.0,
+        "Same_Party": 0.0,
+        "No_Terms": 0.0,
+        "Turncoat": 0.0,
+        "Incumbent": 0.0,
+        "Recontest": 0.0,
+        "MyNeta_education": 0.0,
+        "TCPD_Prof_Main": 0.0,
+        "TCPD_Prof_Main_Desc": 0.0,
+        "TCPD_Prof_Second": 0.0,
+        "TCPD_Prof_Second_Desc": 0.0,
+        "Election_Type": 1.0
+      }
+    },
     "data/release/byelection_cards.csv": {
       "rows": 170,
       "sha256": "65d18c5b5050230f47505ada73729fc4e9ec9e52726ce82107df2d4e01212b2c"
     },
     "data/release/party_matches.csv": {
-      "sha256": "9ee4d2f7a9aa352a81ebbec2c9c31205d9d9bc9187c5880ae88fcccf4de08265"
+      "sha256": "e489127f7f78788535349129bc56c8fdcbd6083d72359a931c8826f6519083e2"
     },
     "data/release/parties_not_in_ppi.csv": {
-      "sha256": "f4f83a548a8053bf4df7aea5e69d9463d948058a2cfa44ef956fbdf4b6bb7600"
+      "sha256": "da7dd24ed0886d0b918210ccc5654171b9276750703194622748e2531fd92de4"
     }
   }
 }

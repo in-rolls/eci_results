@@ -21,7 +21,7 @@ NOTA_NAMES = {"NOTA", "NONE OF THE ABOVE"}
 # TCPD's majority codings (it mixes M/MALE and GEN/GENERAL across years).
 SEX = {"MALE": "M", "FEMALE": "F", "THIRD": "O", "OTHERS": "O", "TG": "O"}
 # BL is Sikkim's Bhutia-Lepcha seat category, which TCPD also uses.
-CATEGORY = {"GENERAL": "GEN", "SC": "SC", "ST": "ST", "BL": "BL"}
+CATEGORY = {"GENERAL": "GEN", "GEN": "GEN", "SC": "SC", "ST": "ST", "BL": "BL"}
 
 
 # ECI names TCPD writes differently.
@@ -448,7 +448,189 @@ def read_eci_detailed_pdf(path):
     return mark_nota(frame)
 
 
+# "Field7:" is printed over "CONSTITUENCY" on old reports' summary pages, so
+# the text layer reads "FCieOldN7:STITUENCY : 41 - ANINI (ST)".
+SUMMARY_SEAT = re.compile(r"STITUENCY\s*:\s*(\d+)\s*-\s*(.+?)\s*$", re.M)
+OLD_DETAILED_SEAT = re.compile(r"^\s*Constituency\s*:?\s*(\d+)\s*\.\s*(.+?)\s*$")
+OLD_DETAILED_ROW = re.compile(
+    r"^\s*(\d+)\s*\.\s*(.+?)\s+(M|F)\s+(?:(\d+)\s+(GEN|SC|ST|BL)\s+)?(\S+)"
+    r"(?:\s+(Uncontested))?\s*$"
+)
+
+
+def seat_name(text):
+    kind = re.search(r"\((SC|ST|BL)\)\s*$", text)
+    name = re.sub(r"\s*\((SC|ST|BL)\)\s*$", "", text).strip().upper()
+    return name, kind[1] if kind else "GEN"
+
+
+def read_eci_uncontested(path):
+    """Seats won unopposed, from an ECI statistical report of 1977 to 2008
+    (PDF with a text layer): Arunachal Pradesh 1999 and 2004, Sikkim 2004.
+
+    A seat is unopposed when its "Constituency Data - Summary" page counts one
+    contesting candidate. Its block in "Detailed Results" must then list
+    exactly one candidate, with no votes, whose name and party equal the
+    summary's winner. Electors are the summary's total. Votes is 0, TCPD's
+    coding for an unopposed winner (220 of its 268 one-candidate rows; the
+    rest are -1, 1 or empty).
+    """
+    import pdfplumber
+
+    with pdfplumber.open(path) as pdf:
+        text = "\n".join(p.extract_text(layout=True) or "" for p in pdf.pages)
+    summaries = {}
+    marks = list(SUMMARY_SEAT.finditer(text))
+    for mark, end in zip(marks, marks[1:] + [None]):
+        block = text[mark.end() : end.start() if end else len(text)]
+        contested = re.search(r"CONTESTED\s+(\d+)\s+(\d+)\s+(\d+)", block)
+        if contested is None or int(contested[3]) != 1:
+            continue
+        electors = re.search(r"ELECTORS.*?TOTAL\s+(\d+)\s+(\d+)\s+(\d+)", block, re.S)
+        winner = re.search(r"Winner\s*:\s*(\S+)\s+(.+?)(?:\s{2,}|\s*$)", block, re.M)
+        if electors is None or winner is None:
+            raise SystemExit(f"{path}: seat {mark[1]} summary lacks electors or winner")
+        if int(electors[1]) + int(electors[2]) != int(electors[3]):
+            raise SystemExit(f"{path}: seat {mark[1]} electors do not add up")
+        summaries[int(mark[1])] = {
+            "Electors": int(electors[3]),
+            "Party": winner[1],
+            "Candidate": winner[2].strip(),
+            "Name": mark[2],
+        }
+    blocks, current = {}, None
+    for line in text.splitlines():
+        seat = OLD_DETAILED_SEAT.match(line)
+        if seat:
+            current = int(seat[1])
+            blocks[current] = {"Name": seat[2], "rows": []}
+            continue
+        row = OLD_DETAILED_ROW.match(line)
+        if row and current is not None:
+            blocks[current]["rows"].append(row)
+    out = []
+    for seat, summary in sorted(summaries.items()):
+        label = f"{path}: seat {seat}"
+        block = blocks.get(seat)
+        if block is None or len(block["rows"]) != 1:
+            raise SystemExit(f"{label}: Detailed Results does not list one candidate")
+        row = block["rows"][0]
+        if (row[2].strip(), row[6]) != (summary["Candidate"], summary["Party"]):
+            raise SystemExit(
+                f"{label}: Detailed Results {row[2].strip()} ({row[6]}), "
+                f"summary {summary['Candidate']} ({summary['Party']})"
+            )
+        if seat_name(block["Name"]) != seat_name(summary["Name"]):
+            raise SystemExit(f"{label}: {block['Name']} vs {summary['Name']}")
+        name, kind = seat_name(block["Name"])
+        sex = {"M": "MALE", "F": "FEMALE"}[row[3]]
+        out.append(
+            {"Constituency_No": seat, "Constituency_Name": name,
+             "Constituency_Type": kind, "Electors": summary["Electors"],
+             "Candidate": row[2].strip(), "Sex": SEX[sex],
+             "Age": int(row[4]) if row[4] else None,
+             "Candidate_Type": CATEGORY.get(row[5]) if row[5] else None,
+             "Party_Source": row[6], "Votes": 0}
+        )  # fmt: skip
+    return pd.DataFrame(out).assign(State_Name=None)
+
+
+def html_rows(path):
+    """Each table row of an HTML page, as its cells' text."""
+    from html import unescape
+
+    text = Path(path).read_text(encoding="latin-1")
+    rows = []
+    for tr in re.findall(r"(?is)<tr.*?</tr>", text):
+        cells = re.findall(r"(?is)<td.*?</td>", tr)
+        cells = [" ".join(unescape(re.sub(r"<[^>]+>", " ", c)).split()) for c in cells]
+        if any(cells):
+            rows.append(cells)
+    return rows
+
+
+def read_eci_bye_page(path):
+    """One seat's result page from ECI's by-election listings of 1996 to 2007
+    (old.eci.gov.in/ByeElection/...): seat, electors, poll date, contesting
+    candidates and valid votes, then one row per candidate.
+
+    The candidates must be as many as the page's CONTESTED count and add up to
+    its VALID votes (and its Total row, where printed); general and service
+    electors must add up to the total.
+    """
+    rows = html_rows(path)
+    flat = [[c for c in r if c] for r in rows]
+    label = str(path)
+
+    def line(name, after=None):
+        start = 0
+        if after is not None:
+            start = next(i for i, r in enumerate(flat) if r and r[0].startswith(after))
+        for r in flat[start:]:
+            if len(r) > 1 and r[1] == name:
+                return [int(c) for c in r[2:]]
+        raise SystemExit(f"{label}: no {name} row")
+
+    seat = next(
+        re.search(r"Constituency\s*-\s*(\d+)\s*-?\s*(.+)$", c)
+        for r in flat
+        for c in r
+        if re.search(r"Constituency\s*-\s*\d+", c)
+    )
+    state = next(
+        re.search(r"Assembl?y\s+of\s+(.+?)(?:\s+Code\b.*)?$", c)[1]
+        for r in flat
+        for c in r
+        if re.search(r"Assembl?y\s+of\s+", c)
+    )
+    contested = line("CONTESTED")[-1]
+    general = line("GENERAL", after="II. ELECTORS")[-1]
+    service = line("SERVICE", after="II. ELECTORS")[-1]
+    electors = line("TOTAL", after="II. ELECTORS")[-1]
+    if general + service != electors:
+        raise SystemExit(f"{label}: electors {general} + {service} != {electors}")
+    valid = line("VALID")[-1]
+    head = next(i for i, r in enumerate(flat) if r[:2] == ["POLLING", "COUNTING"])
+    day, month, year = re.split(r"[./]", flat[head + 1][0])
+    year = int(year) + (1900 if len(year) == 2 else 0)
+    poll_date = f"{year:04d}-{int(month):02d}-{int(day):02d}"
+    start = next(i for i, r in enumerate(flat) if r[:2] == ["S.No.", "Candidate"])
+    candidates, total = [], None
+    for cells in rows[start + 1 :]:
+        cells = [c for c in cells]
+        filled = [c for c in cells if c]
+        if filled and filled[0] == "Total":
+            total = int(filled[1])
+            continue
+        if not filled or not filled[0].isdigit():
+            continue
+        serial, name, sex, party, votes = cells[:5]
+        candidates.append(
+            {"Serial": int(serial), "Candidate": name,
+             "Sex": SEX.get({"M": "MALE", "F": "FEMALE"}.get(sex, sex)),
+             "Party_Source": party, "Votes": int(votes)}
+        )  # fmt: skip
+    serials = [c["Serial"] for c in candidates]
+    if serials != list(range(1, contested + 1)):
+        raise SystemExit(f"{label}: rows {serials}, {contested} contested")
+    added = sum(c["Votes"] for c in candidates)
+    if added != valid or (total is not None and total != valid):
+        raise SystemExit(f"{label}: rows add up to {added}, valid {valid}, {total}")
+    name, kind = seat_name(re.sub(r"\((SC|ST)\)", r" (\1)", seat[2]))
+    frame = pd.DataFrame(candidates).drop(columns="Serial")
+    return frame.assign(
+        State_Name=tcpd_state(state.title()),
+        Constituency_No=int(seat[1]),
+        Constituency_Name=name,
+        Constituency_Type=kind,
+        Electors=electors,
+        Poll_Date=poll_date,
+    )
+
+
 READERS = {
+    "eci_uncontested": read_eci_uncontested,
+    "eci_bye_page": read_eci_bye_page,
     "eci_detailed_pdf": read_eci_detailed_pdf,
     "eci_form20_table": read_eci_form20_table,
     "eci_form20": read_eci_form20,

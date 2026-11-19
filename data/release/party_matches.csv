@@ -40,12 +40,12 @@ BJP,Bihar,BJP,1605.0,ECI name,1,118
 INC,Maharashtra,INC,3482.0,alias,1,118
 JD(U),Bihar,JD(U),11002.0,ECI name,1,117
 DHRMSMJP,Telangana,DHRMSMJP,,unmatched,0,116
+INC,Assam,INC,3482.0,alias,1,116
 SHSUBT,Maharashtra,SHSUBT,,unmatched,0,116
 BJP,Kerala,BJP,1605.0,ECI name,1,114
-INC,Assam,INC,3482.0,alias,1,112
 INC,Kerala,INC,3482.0,alias,1,108
 BSP,Odisha,BSP,16651.0,ECI name,1,106
-BJP,Assam,BJP,1605.0,ECI name,1,101
+BJP,Assam,BJP,1605.0,ECI name,1,105
 BJP,Chhattisgarh,BJP,1605.0,ECI name,1,101
 INC,Chhattisgarh,INC,3482.0,alias,1,101
 BJP,Haryana,BJP,1605.0,ECI name,1,99
@@ -62,13 +62,13 @@ JBNP,Andhra_Pradesh,JBNP,18179.0,ECI name,1,84
 JKPDP,Jammu_&_Kashmir,JKPDP,11133.0,ECI name,1,84
 AAAP,Bihar,AAAP,13.0,ECI name,1,83
 BJP,Jharkhand,BJP,1605.0,ECI name,1,81
-BSP,Uttar_Pradesh,BSP,16651.0,ECI name,1,79
+BSP,Uttar_Pradesh,BSP,16651.0,ECI name,1,80
 RLTP,Rajasthan,RaLtP,6715.0,ECI name,1,79
 AIPTMMK,Tamil_Nadu,AIPTMMK,24414.0,exact,1,78
 JCCJ,Chhattisgarh,JCC(J),4549.0,compact,1,77
+BJP,Uttar_Pradesh,BJP,1605.0,ECI name,1,76
 JNJP,Haryana,JNJP,18457.0,ECI name,1,76
 BJP,Delhi,BJP,1605.0,ECI name,1,75
-BJP,Uttar_Pradesh,BJP,1605.0,ECI name,1,75
 BSP,Delhi,BSP,16651.0,ECI name,1,75
 AAAP,Delhi,AAAP,13.0,ECI name,1,74
 JRBP,Andhra_Pradesh,JRBP,,unmatched,0,74
@@ -84,7 +84,7 @@ AAAP,Madhya_Pradesh,AAAP,13.0,ECI name,1,66
 BJP,Jammu_&_Kashmir,BJP,1605.0,ECI name,1,64
 BSCP,Madhya_Pradesh,BSCP,2047.0,ECI name,1,63
 NCP,Maharashtra,NCP,5792.0,alias,1,63
-SP,Uttar_Pradesh,SP,7425.0,ECI name,1,62
+SP,Uttar_Pradesh,SP,7425.0,ECI name,1,63
 PT,Tamil_Nadu,Puthiya Tamilagam,12001.0,exact,1,60
 JKN,Jammu_&_Kashmir,JKN,11089.0,alias,1,59
 INLD,Haryana,INLD,3863.0,alias,1,58
@@ -131,6 +131,7 @@ SUCI,Kerala,SUCI,8082.0,alias,1,38
 BARESP,Maharashtra,BARESP,1096.0,ECI name,1,37
 INC,Jharkhand,INC,3482.0,alias,1,37
 INC,Tamil_Nadu,INC,3482.0,alias,1,37
+SDF,Sikkim,SDF,7925.0,ECI name,1,37
 AIMIM,Bihar,AIMIM,706.0,alias,1,36
 RASLJP,Bihar,RASLJP,,unmatched,0,36
 JANADIP,Madhya_Pradesh,Jan Adhikar Party,4117.0,exact,1,35
@@ -149,10 +150,10 @@ AMB,West_Bengal,AMB,894.0,alias,1,33
 BHRTADVSIP,Rajasthan,BHRTADVSIP,,unmatched,0,33
 LJPRV,Bihar,LJPRV,,unmatched,0,33
 RTORP,Rajasthan,Right to Recall Party,17316.0,ECI name,1,33
-SDF,Sikkim,SDF,7925.0,ECI name,1,33
 SKM,Sikkim,SKM,16569.0,ECI name,1,33
 BJP,Sikkim,BJP,1605.0,ECI name,1,32
 MHSP,Maharashtra,MHSP,,unmatched,0,32
+AGP,Assam,AGP,978.0,alias,1,31
 AJPK,Tamil_Nadu,Aanaithinthiya Jananayaka Pathukappu Kazhagam,24327.0,ECI name,1,31
 CAPS,Sikkim,CAPS,,unmatched,0,31
 ASPKR,Maharashtra,ASPKR,24926.0,ECI name,1,30
@@ -162,7 +163,6 @@ MLD,Odisha,MLD,,unmatched,0,30
 NAPt,Odisha,National Apni Party,5573.0,ECI name,1,30
 MCPI,Telangana,MCPI,5399.0,ECI name,1,29
 NTK,Puducherry,NTK,5533.0,ECI name,1,29
-AGP,Assam,AGP,978.0,alias,1,28
 BHMS,Maharashtra,BHMS,,unmatched,0,28
 BNARP,West_Bengal,Bharatiya Nyay-Adhikar Raksha Party,24466.0,ECI name,1,28
 CPI,Kerala,CPI,2444.0,alias,1,28
@@ -183,6 +183,7 @@ BJP,Gujarat,BJP,1605.0,ECI name,1,25
 BJP,Karnataka,BJP,1605.0,ECI name,1,25
 BMUP,Madhya_Pradesh,BMUP,1074.0,ECI name,1,25
 DPAP,Jammu_&_Kashmir,DPAP,,unmatched,0,25
+INC,Arunachal_Pradesh,INC,3482.0,alias,1,25
 VPI,Assam,VPI,8516.0,ECI name,1,25
 AIFB,Maharashtra,AIFB,3040.0,ECI name,1,24
 BJP,Mizoram,BJP,1605.0,ECI name,1,24
@@ -207,7 +208,6 @@ SP,Chhattisgarh,SP,7425.0,ECI name,1,22
 rpsn,Maharashtra,rpsn,7174.0,ECI name,1,22
 APoI,Jharkhand,APoI,880.0,ECI name,1,21
 BSP,Karnataka,BSP,16651.0,ECI name,1,21
-INC,Arunachal_Pradesh,INC,3482.0,alias,1,21
 RSP,West_Bengal,RSP,12053.0,ECI name,1,21
 SWP,Maharashtra,SWP,12961.0,ECI name,1,21
 Samajwadi Party,Uttar_Pradesh,SP,7425.0,any case,1,21
@@ -613,6 +613,7 @@ Bharatiya Janata Party,Assam,BJP,1605.0,any case,1,5
 Bharatiya Janata Party,Karnataka,BJP,1605.0,any case,1,5
 Bharatiya Janata Party,Maharashtra,BJP,1605.0,any case,1,5
 Bharatiya Janata Party,Uttarakhand,BJP,1605.0,any case,1,5
+CPI,Assam,CPI,2444.0,alias,1,5
 CPI,Delhi,CPI,2444.0,alias,1,5
 CPI(M),Bihar,CPM,14635.0,alias,1,5
 CPI(ML)(L),Jharkhand,CPI(ML)(L),2472.0,ECI name,1,5
@@ -716,7 +717,6 @@ BSP,Himachal_Pradesh,BSP,16651.0,ECI name,1,4
 BUJNBHRTP,Karnataka,BUJNBHRTP,,unmatched,0,4
 Bharatiya Janata Party,Madhya_Pradesh,BJP,1605.0,any case,1,4
 Bharatiya Janata Party,Tripura,BJP,1605.0,any case,1,4
-CPI,Assam,CPI,2444.0,alias,1,4
 CPI(M),Madhya_Pradesh,CPM,14635.0,alias,1,4
 CPI(M),Maharashtra,CPM,14635.0,alias,1,4
 CPI(ML)(L),Telangana,CPI(ML)(L),2472.0,ECI name,1,4
@@ -813,6 +813,7 @@ AHIMSASP,Tamil_Nadu,Ahimsa Socialist Party,24410.0,ECI name,1,3
 AIAM,West_Bengal,AIAM,,unmatched,0,3
 AIFB,Delhi,AIFB,3040.0,ECI name,1,3
 AIFB,Tamil_Nadu,AIFB,3040.0,ECI name,1,3
+AIIC(T),Assam,AIIC(T),8871.0,exact,1,3
 AIUUK,Tamil_Nadu,All India Uzhavargal Uzhaippalargal Katchi,24408.0,ECI name,1,3
 AJM,Assam,AJM,24353.0,ECI name,1,3
 AJPI,Uttar_Pradesh,Aam Janta Party (India),17584.0,ECI name,1,3
@@ -1924,6 +1925,7 @@ KP,Karnataka,KP,4777.0,ECI name,1,1
 KPPR,Karnataka,KPPR,24375.0,ECI name,1,1
 KRSPLM,Kerala,KRSPLM,,unmatched,0,1
 KSNVSWP,Uttar_Pradesh,KSNVSWP,,unmatched,0,1
+KVP,Uttar_Pradesh,KVP,11403.0,exact,1,1
 Kalinga Sena,Odisha,KS,4743.0,name,1,1
 KiSP,Bihar,KiSP,4865.0,any case,1,1
 Kisan Majdoor Berojgar Sangh,Kerala,KMBS,4853.0,name,1,1
@@ -1955,6 +1957,7 @@ LSEP,Chhattisgarh,LSEP,,unmatched,0,1
 LSMP,Bihar,Lok Samaj Party,24968.0,ECI name,1,1
 LSMP,Chhattisgarh,Lok Samaj Party,24968.0,ECI name,1,1
 LSNP,Bihar,BJKVP,1278.0,ECI name,1,1
+LSP,Uttar_Pradesh,LSP,,unmatched,4,1
 LTSP,Madhya_Pradesh,LTSP,24772.0,exact,2,1
 Liberal Socialist Party,Haryana,Liberal Socialist Party,,unmatched,0,1
 Lokrajya Janata Party,Maharashtra,Lokrajya Janata Party,,unmatched,0,1
