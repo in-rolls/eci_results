@@ -90,18 +90,20 @@ winners[winners.State_Name == "Telangana"].groupby("Year").Party.value_counts()
 | State Assembly Election | Mizoram | 2023 | 40 | 174 |
 | State Assembly Election | Odisha | 2024 | 147 | 1,285 |
 | State Assembly Election | Puducherry | 2026 | 30 | 294 |
-| State Assembly Election | Rajasthan | 2023 | 199 | 1,863 |
-| State Assembly Election | Rajasthan | 2024 | 1 | 12 |
+| State Assembly Election | Rajasthan | 2023 | 200 | 1,875 |
 | State Assembly Election | Sikkim | 2024 | 32 | 146 |
 | State Assembly Election | Tamil Nadu | 2026 | 234 | 4,023 |
 | State Assembly Election | Telangana | 2023 | 119 | 2,290 |
 | State Assembly Election | West Bengal | 2026 | 294 | 2,926 |
 <!-- coverage:end -->
 
-Karanpur (Rajasthan, seat 3) is dated January 2024: ECI's 2023 report includes
-it, but its poll was adjourned to 5 January 2024 after a candidate died.
+Karanpur (Rajasthan, seat 3) is in ECI's 2023 report, though its poll was
+adjourned to 5 January 2024 after a candidate died. Like every adjourned poll
+here it carries the general election's year and month (2023, December), as
+TCPD codes adjourned polls (below).
 Surat (Lok Sabha 2024) is missing because its candidate was elected unopposed
-and ECI's report leaves it out. By-elections are in a file of their own (below).
+and ECI's report leaves it out. By-elections, and the five adjourned polls
+missing from TCPD's own general elections, are in files of their own (below).
 
 ## By-elections, 2022 to 2026
 
@@ -160,6 +162,69 @@ GEN for them.
 by-elections TCPD has match TCPD's rows in every seat fact, every candidate's
 votes, position, party and deposit, and NOTA's votes
 ([`byelection_check.csv`](data/release/byelection_check.csv), `make validate`).
+
+## Adjourned polls missing from TCPD
+
+[`AE_adjourned_2016_2023.csv.gz`](data/release/AE_adjourned_2016_2023.csv.gz)
+has the seats whose poll was adjourned and held after a general election TCPD
+covers, and which TCPD's rows lack. Since the 2008 delimitation these are all
+five such seats: checking every TCPD assembly general election since then for
+seat numbers missing from 1 to the state's last seat finds exactly these
+(renumbering after the Andhra Pradesh split aside).
+
+| Seat | General election | Poll held | Source |
+|---|---|---|---|
+| Aravakurichi (Tamil Nadu, 134) | 2016, assembly 11 | 19 November 2016 | Form 20, Chief Electoral Officer, Tamil Nadu |
+| Thanjavur (Tamil Nadu, 174) | 2016, assembly 11 | 19 November 2016 | Form 20, Chief Electoral Officer, Tamil Nadu |
+| Ramgarh (Rajasthan, 67) | 2018, assembly 15 | 28 January 2019 | ECI's Rajasthan 2018 report, "10 - Detailed Results" (PDF), checked against Ramgarh's page of "09 - Constituency Data Summary" |
+| Patkura (Odisha, 96) | 2019, assembly 16 | 20 July 2019 | Form 20, Chief Electoral Officer, Odisha |
+| Sohiong (Meghalaya, 23) | 2023, assembly 11 | 10 May 2023 | ECI's Meghalaya 2023 report "Including AC-23", "10 - Detailed Results", checked against Sohiong's page of "8 - Constituency Data Summary" |
+
+Each is coded as part of its general election, as TCPD codes the two
+adjourned polls its own files have: Jayanagar (Karnataka, 173), polled on
+11 June 2018, is Year 2018, month 5, Poll_No 0, like the rest of Karnataka's
+May 2018 election; Vellore (Lok Sabha, Tamil Nadu 8), polled on 5 August 2019,
+is Year 2019, month 4, Poll_No 0. So `Poll_No` is 0, and `Assembly_No`, `Year`
+and `month` are the general election's own (the poll dates are in the table).
+The seat's facts (district, sub-region, reservation, `DelimID`) come from its
+latest TCPD row on the same boundaries. The build stops unless the named
+election is the state's latest TCPD general election before the poll (rows
+with Poll_No above 0 do not count), TCPD's rows for it lack the seat, and the
+seat's name and reservation match TCPD's; where ECI publishes a seat summary,
+its candidates, electors, total valid votes and NOTA must equal the rows.
+
+- **Form 20.** ECI's reports leave out Aravakurichi, Thanjavur and Patkura: the
+  Tamil Nadu 2016 report lists the two seats' candidates without votes, and the
+  Odisha 2019 report has 146 of 147 seats (both in `data/raw/eci_reports/adjourned/`).
+  No index card or archived results page turned up, so the source is the Chief
+  Electoral Officer's Form 20, the final result sheet. The readers check each
+  against itself: polling-station rows add up to the recorded votes, recorded
+  and postal votes to the totals, and the candidates to total valid votes. The
+  candidates and parties in each seat's `candidates.csv` must have the same
+  letters as their column's header in the PDF (the Tamil Nadu headers are set
+  sideways, and some names run past the printed cell; the PDF keeps the full
+  text). For the Tamil Nadu seats the order and parties also agree with the
+  Form 7A list of contesting candidates of 5 November 2016, checked by eye.
+  Form 20 does not record sex, age or category, which are empty. Aravakurichi's
+  electors are printed "200347+5", general and service electors. Thanjavur's
+  sheet misspells DMDK as "DRAVIA"; it is kept as printed and matched in
+  `party_aliases.csv`.
+- **Ramgarh.** ECI's Rajasthan 2018 report is a PDF only. `read_eci_detailed_pdf`
+  reads all 200 seats and checks each row's general and postal votes against
+  its total and each seat's rows against its TURNOUT row. On the other 199
+  seats it equals TCPD's 2018 rows in every vote count in 193; in seats 1, 43,
+  97, 119, 149 and 153 a row differs, by up to 689 votes. TCPD's electors there
+  are below the report's total in every seat (median 235), as if service
+  electors were left out; the rows here keep ECI's total. Ramgarh's seat summary
+  gives its declaration as 31 January 2019 but its polling date as 7 December
+  2018, the original schedule.
+- **Sohiong.** The Meghalaya report that includes Sohiong leaves out the NOTA
+  rows of the other 59 seats. Its candidate rows for those seats equal the
+  version without Sohiong. TCPD's 2023 rows equal that version in every vote
+  count in 55 of the 59 seats; in seats 44, 49, 50 and 52 a row differs, by up
+  to 155 votes.
+
+Before 2008 TCPD lacks more seats; they are not covered yet.
 
 ## What each column holds
 
@@ -229,6 +294,11 @@ in [`data/source.json`](data/source.json).
   Results" listings of eci.gov.in (2025 on) and old.eci.gov.in (2022 to 2024).
   `MANIFEST.csv` gives each file's source page, address or file id, SHA-256,
   server date and retrieval time; `fetch_log.jsonl` has every request.
+- [`data/raw/eci_reports/adjourned/`](data/raw/eci_reports/adjourned/): the
+  files for the five adjourned polls (above), ECI's Tamil Nadu 2016 and Odisha
+  2019 Detailed Results that leave three of them out, and the Tamil Nadu Form
+  7A lists, downloaded by Priyadarshi Amar on 18 and 19 November 2026;
+  `MANIFEST.csv` and `fetch_log.jsonl` as for the by-elections.
 - [`data/raw/wayback/`](data/raw/wayback/): ECI's results website as archived by
   the Internet Archive, fetched by
   [`fetch_wayback.py`](src/eci_results/fetch_wayback.py) and parsed by

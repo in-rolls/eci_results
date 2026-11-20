@@ -22,13 +22,7 @@
       "obtained": "Downloaded from eci.gov.in on 2026-11-16 by Priyadarshi Amar (eci.gov.in refuses this repository's requests); URL, SHA-256, server Last-Modified and retrieval time in data/raw/eci_reports/MANIFEST_*.csv and fetch_log.jsonl",
       "dataset": "ECI statistical report, '10 - Detailed Results'",
       "sha256": "bf179205dd430f471d41d8d37564e7b2106cdae124aed6ed06645f74b06483a4",
-      "seat_dates": {
-        "3": {
-          "year": 2024,
-          "month": 1
-        }
-      },
-      "note": "Includes Karanpur (seat 3), whose poll was adjourned to 5 January 2024; its rows carry that date."
+      "note": "Includes Karanpur (seat 3), whose poll was adjourned and held on 5 January 2024; like every adjourned poll it takes the general election's year and month."
     },
     {
       "election": "assembly",
@@ -528,5 +522,98 @@
       "dataset": "thecont1/india-votes-data (MIT), 2024 Lok Sabha results scraped from results.eci.gov.in. Its 'Constituency ID' keeps only the first digit of ECI's seat number; used only to check the seat numbers taken from report 33's order.",
       "sha256": "f2ce269e912b2f52da204a469492d95267336831ade4f908469369ccf321e439"
     }
-  }
+  },
+  "adjourned": [
+    {
+      "election": "assembly",
+      "state": "Tamil_Nadu",
+      "seat": 134,
+      "general_year": 2016,
+      "poll_date": "2016-11-19",
+      "format": "eci_form20_table",
+      "path": "data/raw/eci_reports/adjourned/tamil_nadu_2016_aravakurichi/Form20_AC134_Aravakurichi.pdf",
+      "url": "https://www.elections.tn.gov.in/ByeElection2016_Form20/134.pdf",
+      "obtained": "Downloaded by Priyadarshi Amar on 2026-11-18/19; URL or file id, SHA-256, server date and retrieval time in data/raw/eci_reports/adjourned/MANIFEST.csv and fetch_log.jsonl",
+      "dataset": "Form 20, final result sheet, 134 - Aravakurichi, Chief Electoral Officer, Tamil Nadu",
+      "sha256": "32a22cda4abda1a651185a4a0d945aca991cb14fa6e9cf92b274a7755cbf73d3",
+      "candidates": {
+        "path": "data/raw/eci_reports/adjourned/tamil_nadu_2016_aravakurichi/candidates.csv",
+        "sha256": "c715bdb4d5403641f2420d9aae7f2d9103f35cde76685168bdbd862afd12d8bd"
+      },
+      "note": "ECI's 2016 report lists Aravakurichi's May 2016 candidates without votes (tamil_nadu_2016/); the poll was held on 19 November 2016. Names and parties are as Form 20's header prints them; their order and parties agree with the Form 7A list of 5 November 2016, checked by eye. Electors are printed '200347+5' (general and service). No sex, age or category."
+    },
+    {
+      "election": "assembly",
+      "state": "Tamil_Nadu",
+      "seat": 174,
+      "general_year": 2016,
+      "poll_date": "2016-11-19",
+      "format": "eci_form20_table",
+      "path": "data/raw/eci_reports/adjourned/tamil_nadu_2016_thanjavur/Form20_AC174_Thanjavur.pdf",
+      "url": "https://www.elections.tn.gov.in/ByeElection2016_Form20/174.pdf",
+      "obtained": "Downloaded by Priyadarshi Amar on 2026-11-18/19; URL or file id, SHA-256, server date and retrieval time in data/raw/eci_reports/adjourned/MANIFEST.csv and fetch_log.jsonl",
+      "dataset": "Form 20, final result sheet, 174 - Thanjavur, Chief Electoral Officer, Tamil Nadu",
+      "sha256": "55c0f07179492bb2f033d4041eb1f897b9161039a442c932a5076c9bc8527e46",
+      "candidates": {
+        "path": "data/raw/eci_reports/adjourned/tamil_nadu_2016_thanjavur/candidates.csv",
+        "sha256": "d976de18da67548a7b4b6697a383e5120acca1495829a69c0eb36c7f5b563a79"
+      },
+      "note": "As for Aravakurichi. Form 20 prints DMDK as 'DESIYA MURPOKKU DRAVIA KAZHAGAM' (kept as printed; matched in party_aliases.csv)."
+    },
+    {
+      "election": "assembly",
+      "state": "Rajasthan",
+      "seat": 67,
+      "general_year": 2018,
+      "poll_date": "2019-01-28",
+      "format": "eci_detailed_pdf",
+      "path": "data/raw/eci_reports/adjourned/rajasthan_2018/10-Detailed_Results.pdf",
+      "url": "https://old.eci.gov.in/files/file/9645-statistical-data-of-rajasthan-la-2018/ (file id 23073)",
+      "obtained": "Downloaded by Priyadarshi Amar on 2026-11-18/19; URL or file id, SHA-256, server date and retrieval time in data/raw/eci_reports/adjourned/MANIFEST.csv and fetch_log.jsonl",
+      "dataset": "ECI statistical report, Rajasthan 2018, '10 - Detailed Results' (published as PDF only); only seat 67 (Ramgarh) is used",
+      "sha256": "0c7b53e3e23c4534b6e0ce86119beec1140cb7aefe4512ff22e5c761a86d4370",
+      "summary": {
+        "path": "data/raw/eci_reports/adjourned/rajasthan_2018/09-Constituency_Data_Summary.pdf",
+        "sha256": "d36d829e6a7d6eee8cfd51a9a501af505d2057a66ab41a45222ba5c584b2658a"
+      },
+      "note": "Ramgarh's poll was adjourned and held on 28 January 2019; the report includes it. Its seat summary gives the declaration as 31 January 2019 but the polling date as 7 December 2018, the original schedule."
+    },
+    {
+      "election": "assembly",
+      "state": "Odisha",
+      "seat": 96,
+      "general_year": 2019,
+      "format": "eci_form20",
+      "path": "data/raw/eci_reports/adjourned/odisha_2019_patkura/Form20_AC096_Patkura.pdf",
+      "url": "https://ceoodisha.nic.in/docs/Election/2019/Vidhansabha2019_FORM20/Ac096.pdf",
+      "obtained": "Downloaded from the Chief Electoral Officer, Odisha on 2026-11-18 by Priyadarshi Amar; details in data/raw/eci_reports/adjourned/MANIFEST.csv and fetch_log.jsonl",
+      "dataset": "Form 20, final result sheet, 'Adjourned election to 96-Patkura AC'",
+      "sha256": "2084ea9ba1beed8c86277d1956135d0309ca2bd5010f3dca4ecbd749178361e1",
+      "candidates": {
+        "path": "data/raw/eci_reports/adjourned/odisha_2019_patkura/candidates.csv",
+        "sha256": "eb44b249e8d29f48f2bdc328ff77bf11f34ec9e125d4a4130b5b24fbf0501b4e"
+      },
+      "note": "ECI's 2019 statistical report leaves Patkura out (its Detailed Results, in odisha_2019/, has 146 of 147 seats) and no index card was found, so the source is Form 20. Form 20 gives no date; the poll of 20 July 2019 is ECI's schedule of 4 July as reported by ANI and PTI. Form 20 does not record candidates' sex, age or category.",
+      "poll_date": "2019-07-20"
+    },
+    {
+      "election": "assembly",
+      "state": "Meghalaya",
+      "seat": 23,
+      "general_year": 2023,
+      "format": "eci_detailed",
+      "path": "data/raw/eci_reports/adjourned/meghalaya_2023_including_ac23/10-Detailed_Results.xlsx",
+      "url": "https://old.eci.gov.in/files/file/15053-meghalaya-general-legislative-election-2023-including-ac-23/ (file id 42008)",
+      "obtained": "Downloaded from old.eci.gov.in on 2026-11-18 by Priyadarshi Amar; URL or file id, SHA-256, server date and retrieval time in data/raw/eci_reports/adjourned/MANIFEST.csv and fetch_log.jsonl",
+      "dataset": "ECI statistical report, Meghalaya 2023 'Including AC-23', '10 - Detailed Results'; only seat 23 (Sohiong) is used",
+      "sha256": "eaba46674e0b097f97864d5cda40c9301e60ef4d943781cd912426e54cb11e63",
+      "summary": {
+        "path": "data/raw/eci_reports/adjourned/meghalaya_2023_including_ac23/8-Constituency_Data_Summery_Report.xlsx",
+        "sheet": "S15-23-Sohiong",
+        "sha256": "3254c988a562c5f69f1ee16eb1c46ccbc70ac4d14909fe7f42b618c0a03e675d"
+      },
+      "note": "Sohiong's poll was adjourned and held on 10 May 2023 (counted 13 May), after the general election of 27 February. This version of the report includes it but leaves out the NOTA rows of the other 59 seats; their candidate rows equal the version without Sohiong (meghalaya_2023_excluding_ac23/).",
+      "poll_date": "2023-05-10"
+    }
+  ]
 }

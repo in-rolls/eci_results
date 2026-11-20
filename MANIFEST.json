@@ -55,7 +55,7 @@
     "data/release/AE_2023_2026.csv.gz": {
       "rows": 34198,
       "contests": 2779,
-      "sha256": "b4b263869d25c60a749b82b3bdd24e2e4147e089276228779317b880b47d7d7f",
+      "sha256": "770a2ca235dee333758f43bb3c12cff34cb3a969fdc25c7608941eb94a352cc3",
       "filled_share": {
         "State_Name": 1.0,
         "Assembly_No": 1.0,
@@ -212,15 +212,69 @@
         "Election_Type": 1.0
       }
     },
+    "data/release/AE_adjourned_2016_2023.csv.gz": {
+      "rows": 94,
+      "contests": 5,
+      "sha256": "adc02ab8a6d618d930f3d679b2bbfc73d435c0168365d058f0b5b166203c0d12",
+      "filled_share": {
+        "State_Name": 1.0,
+        "Assembly_No": 1.0,
+        "Constituency_No": 1.0,
+        "Year": 1.0,
+        "month": 1.0,
+        "DelimID": 1.0,
+        "Poll_No": 1.0,
+        "Position": 1.0,
+        "Candidate": 1.0,
+        "Sex": 0.2766,
+        "Party": 1.0,
+        "Votes": 1.0,
+        "Age": 0.2766,
+        "Candidate_Type": 0.2766,
+        "Valid_Votes": 1.0,
+        "Electors": 1.0,
+        "Constituency_Name": 1.0,
+        "Constituency_Type": 1.0,
+        "District_Name": 1.0,
+        "Sub_Region": 1.0,
+        "N_Cand": 1.0,
+        "Turnout_Percentage": 1.0,
+        "Vote_Share_Percentage": 1.0,
+        "Deposit_Lost": 0.9468,
+        "Margin": 1.0,
+        "Margin_Percentage": 1.0,
+        "ENOP": 0.0,
+        "pid": 0.0,
+        "Party_Type_TCPD": 0.0,
+        "Party_ID": 0.9681,
+        "last_poll": 0.0,
+        "Contested": 0.0,
+        "Last_Party": 0.0,
+        "Last_Party_ID": 0.0,
+        "Last_Constituency_Name": 0.0,
+        "Same_Constituency": 0.0,
+        "Same_Party": 0.0,
+        "No_Terms": 0.0,
+        "Turncoat": 0.0,
+        "Incumbent": 0.0,
+        "Recontest": 0.0,
+        "MyNeta_education": 0.0,
+        "TCPD_Prof_Main": 0.0,
+        "TCPD_Prof_Main_Desc": 0.0,
+        "TCPD_Prof_Second": 0.0,
+        "TCPD_Prof_Second_Desc": 0.0,
+        "Election_Type": 1.0
+      }
+    },
     "data/release/byelection_cards.csv": {
       "rows": 170,
       "sha256": "65d18c5b5050230f47505ada73729fc4e9ec9e52726ce82107df2d4e01212b2c"
     },
     "data/release/party_matches.csv": {
-      "sha256": "6f6d0db8133a743a11bfd75b6376477d62abb0907fb16d515271d1a0d90c80a0"
+      "sha256": "9ee4d2f7a9aa352a81ebbec2c9c31205d9d9bc9187c5880ae88fcccf4de08265"
     },
     "data/release/parties_not_in_ppi.csv": {
-      "sha256": "6eb866f8576a0ba55034e10b9d3623137be141351812a050d98243c7ad0bc7ea"
+      "sha256": "f4f83a548a8053bf4df7aea5e69d9463d948058a2cfa44ef956fbdf4b6bb7600"
     }
   }
 }
